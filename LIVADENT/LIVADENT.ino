@@ -1,23 +1,21 @@
 #include "lcd.h"
-#include "wifi.h"
+#include "wifi_livadent.h"
 
 void setup() {
   Serial.begin(115200);
   lcd_setup();
+  WiFi_scan();
   // wifi_setup();
   // wifi_scan();
 }
 
 // bool anu = 0;
 void loop() {
-
+  update_UI();
   // if(!anu){
   //    wifi_setup();
-  //    wifi_scan();
+  //    wifi_scan();  
   //    anu = 1;
   // }
-
-  lv_timer_handler();  // let the GUI do its work
-  lv_tick_inc(5);     // tell LVGL how much time has passed
   delay(5);
 }

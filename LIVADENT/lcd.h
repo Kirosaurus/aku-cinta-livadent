@@ -13,3 +13,4 @@
 extern void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data);
 extern void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map);
 extern void lcd_setup();
+extern void update_UI();

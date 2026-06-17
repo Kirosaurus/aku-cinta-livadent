@@ -1,13 +1,9 @@
-// #include <Arduino.h>
-#include <UI_LCD.h>
-#include <WiFi.h>
-// #include <esp_wifi.h>
 #include "lcd.h"
-#include "wifi.h"
-// #include "esp_event.h"
-// #include "esp_netif.h"
-// #include "nvs_flash.h"
+#include "wifi_livadent.h"
 
+static wifi_conn_state_t wifi_state = WIFI_STATE_IDLE;
+static uint32_t wifi_connect_start_ms = 0;
+static lv_timer_t * wifi_timer = NULL;
 
 // FUNCTION INI BUAT SETUP WIFI PAKE LIBRARY "esp_wifi.h" (Cara Kuno Low Level Setup WiFi ESP32)
 // ================================================================================================================================================================
@@ -105,11 +101,73 @@
 
 // ================================================================================================================================================================
 
-// void connect_wifi(){
-//   const char* ssid = lv_label_get_text(object.name_ssid);
-//   const char* password = lv_textarea_get_text(object.textarea_password);
+void WiFi_scan(){
+  int16_t apNum = WiFi.scanNetworks();
+  Serial.println(apNum);
 
-//   lv_obj_remove_flag(object.panel_status_connection, LV_OBJ_FLAG_HIDDEN);
-//   lv_label_set_text(object.wifi_ssid_status_connection, ssid);
+  lv_obj_t * btn;
 
-// }
+  for(int16_t i=0;i<apNum;i++){
+    btn = lv_list_add_button(objects.wifi_list, LV_SYMBOL_WIFI, WiFi.SSID(i).c_str());
+    lv_obj_add_event_cb(btn, action_list_btn_wifi_network, LV_EVENT_CLICKED, NULL);
+  }
+
+  char nAP[25];
+  sprintf(nAP, "%d Wi-Fi Terdeteksi", apNum);
+  lv_label_set_text(objects.wifi_status, nAP);
+}
+
+void WiFi_connect_tick(lv_timer_t * timer){
+  if(wifi_state == WIFI_STATE_CONNECTING){
+    uint32_t elapsed = millis() - wifi_connect_start_ms;
+
+    if(WiFi.status() == WL_CONNECTED){
+      wifi_state = WIFI_STATE_SUCCESS;
+      lv_obj_add_flag(objects.wifi_spinner, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(objects.wifi_success, LV_OBJ_FLAG_HIDDEN);
+      lv_label_set_text(objects.detail_status_wifi_connection, "Berhasil Terhubung ke ");
+
+      lv_obj_add_flag(objects.panel_status_connection, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.keyboard_password, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.panel_input_wifi_password, LV_OBJ_FLAG_HIDDEN);
+      Serial.println("Berhasil Terhubung bossqqq");
+      lv_timer_del(wifi_timer);
+      wifi_timer = NULL;
+    }
+    else if(elapsed >= WIFI_CONNECT_TIMEOUT){
+      wifi_state = WIFI_STATE_FAILED;
+
+      WiFi.disconnect();
+      lv_obj_add_flag(objects.wifi_spinner, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(objects.wifi_failed, LV_OBJ_FLAG_HIDDEN);
+      lv_label_set_text(objects.detail_status_wifi_connection, "Gagal Terhubung ke ");
+
+      Serial.println("WiFi Timeout!");
+
+      lv_timer_del(wifi_timer);
+      wifi_timer = NULL;
+    }
+  }
+}
+
+void WiFi_connect(lv_event_t * e){
+  Serial.println("TOMBOL KONEK DIPENCET");
+  const char* ssid = lv_label_get_text(objects.name_ssid);
+  const char* password = lv_textarea_get_text(objects.textarea_password);
+
+  lv_obj_remove_flag(objects.panel_status_connection, LV_OBJ_FLAG_HIDDEN);
+  lv_label_set_text(objects.wifi_ssid_status_connection, ssid);
+  lv_obj_remove_flag(objects.wifi_spinner, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(objects.wifi_failed, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(objects.wifi_success, LV_OBJ_FLAG_HIDDEN);
+  update_UI();
+
+  WiFi.begin(ssid, password);
+  wifi_state = WIFI_STATE_CONNECTING;
+  wifi_connect_start_ms = millis();
+  
+  if(wifi_timer != NULL){
+    lv_timer_del(wifi_timer);
+  }
+  wifi_timer = lv_timer_create(WiFi_connect_tick, 100, NULL);
+}

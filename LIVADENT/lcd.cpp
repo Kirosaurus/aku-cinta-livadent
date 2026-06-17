@@ -1,4 +1,5 @@
 #include "lcd.h"
+#include "wifi_livadent.h"
 
 // #include "UI_LCD/actions.h"
 // #include "UI_LCD/fonts.h"
@@ -18,9 +19,7 @@ uint16_t calData[5] = { 410, 3430, 323, 3386, 7 };
 int x, y, z;
 lv_obj_t *touch_debug_label;
 
-// static uint32_t my_tick_get_cb(void) {
-//   return millis();
-// }
+uint32_t lastTick = 0;
 
 void lcd_setup(){
     lv_init();
@@ -44,6 +43,9 @@ void lcd_setup(){
   lv_indev_set_read_cb(indev, my_touchpad_read);
 
   ui_init();
+
+  lv_obj_add_event_cb(objects.connect_wifi_btn, WiFi_connect, LV_EVENT_CLICKED, NULL);
+
   tft.setRotation(1);
 }
 
@@ -91,4 +93,12 @@ void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
   tft.endWrite();
 
   lv_display_flush_ready(disp);
+}
+
+void update_UI() {
+  lv_tick_inc(millis() - lastTick); //--> Update the tick timer. Tick is new for LVGL 9.
+  lastTick = millis();
+  lv_timer_handler(); //--> Update the UI.
+
+  ui_tick();
 }
