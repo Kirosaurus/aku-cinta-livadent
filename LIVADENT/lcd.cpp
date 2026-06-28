@@ -44,7 +44,20 @@ void lcd_setup(){
 
   ui_init();
 
+  // Ngasih Event Handler
   lv_obj_add_event_cb(objects.connect_wifi_btn, WiFi_connect, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.pengaturan_wifi_btn, wifi_settings_btn, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.back_wifi_btn, back_wifi_btn, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.main_menu, main_menu_loaded, LV_EVENT_SCREEN_LOADED, NULL);
+
+  lv_obj_add_event_cb(objects.wifi_settings, wifi_settings_loaded, LV_EVENT_SCREEN_LOADED, NULL);
+
+  lv_obj_add_event_cb(objects.disconnect_wifi_btn, disconnect_btn, LV_EVENT_CLICKED, NULL);
+  
+  lv_obj_add_event_cb(objects.splash_screen, splash_screen_loaded, LV_EVENT_SCREEN_LOADED, NULL);
 
   tft.setRotation(1);
 }

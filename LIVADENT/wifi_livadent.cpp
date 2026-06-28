@@ -3,7 +3,7 @@
 
 static wifi_conn_state_t wifi_state = WIFI_STATE_IDLE;
 static uint32_t wifi_connect_start_ms = 0;
-static lv_timer_t * wifi_timer = NULL;
+static lv_timer_t* wifi_timer = NULL;
 
 // FUNCTION INI BUAT SETUP WIFI PAKE LIBRARY "esp_wifi.h" (Cara Kuno Low Level Setup WiFi ESP32)
 // ================================================================================================================================================================
@@ -57,7 +57,7 @@ static lv_timer_t * wifi_timer = NULL;
 //   }
 
 //   lv_obj_clean(objects.wifi_list);
-  
+
 //   if(apNum > 0){
 //     print_ssid(apRecords, apNum);
 //   }
@@ -95,46 +95,94 @@ static lv_timer_t * wifi_timer = NULL;
 
 //   lv_label_set_text(objects.wifi_status, apStatus);
 //   for(uint16_t i=0;i<uniqueCount;i++){
-//     Serial.print("SSID : "); Serial.println((char*)uniqueRecords[i].ssid); 
+//     Serial.print("SSID : "); Serial.println((char*)uniqueRecords[i].ssid);
 //   }
 // }
 
 // ================================================================================================================================================================
 
-void WiFi_scan(){
+
+
+bool is_ssid_unique(char unique_ssid[][33], int jumlah_unique_ssid, const char* ssid) {
+  for (int i = 0; i < jumlah_unique_ssid; i++) {
+    if (strcmp(unique_ssid[i], ssid) == 0) {
+      Serial.println(ssid);
+      return false;
+    }
+  }
+  return true;
+}
+
+void WiFi_scan() {
   int16_t apNum = WiFi.scanNetworks();
   Serial.println(apNum);
+  char unique_ssid[apNum][33];
+  int jumlah_unique_ssid = 0;
+  lv_obj_t* btn;
 
-  lv_obj_t * btn;
+  lv_obj_clean(objects.wifi_list);
 
-  for(int16_t i=0;i<apNum;i++){
-    btn = lv_list_add_button(objects.wifi_list, LV_SYMBOL_WIFI, WiFi.SSID(i).c_str());
-    lv_obj_add_event_cb(btn, action_list_btn_wifi_network, LV_EVENT_CLICKED, NULL);
+  for (int16_t i = 0; i < apNum; i++) {
+    String wifi_ssid = WiFi.SSID(i);
+
+    const char* ssid = wifi_ssid.c_str();
+
+    if (is_ssid_unique(unique_ssid, jumlah_unique_ssid, ssid)) {
+      strncpy(unique_ssid[jumlah_unique_ssid], ssid, 32);
+      btn = lv_list_add_button(objects.wifi_list, LV_SYMBOL_WIFI, ssid);
+      unique_ssid[jumlah_unique_ssid][32] = '\0';
+
+      lv_obj_add_event_cb(btn, list_btn_wifi_network, LV_EVENT_CLICKED, NULL);
+
+      jumlah_unique_ssid++;
+      Serial.println("Unique");
+    } else {
+      Serial.println("Not Unique");
+    }
   }
 
   char nAP[25];
-  sprintf(nAP, "%d Wi-Fi Terdeteksi", apNum);
+  sprintf(nAP, "%d Wi-Fi Terdeteksi", jumlah_unique_ssid);
   lv_label_set_text(objects.wifi_status, nAP);
+
+  WiFi.scanDelete();
 }
 
-void WiFi_connect_tick(lv_timer_t * timer){
-  if(wifi_state == WIFI_STATE_CONNECTING){
+void wifi_status_conn_timer(lv_timer_t* timer) {
+  lv_obj_add_flag(objects.panel_status_connection, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(objects.keyboard_password, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(objects.panel_input_wifi_password, LV_OBJ_FLAG_HIDDEN);
+
+  lv_timer_delete(timer);
+}
+
+void WiFi_connect_tick(lv_timer_t* timer) {
+  if (wifi_state == WIFI_STATE_CONNECTING) {
     uint32_t elapsed = millis() - wifi_connect_start_ms;
 
-    if(WiFi.status() == WL_CONNECTED){
+    if (WiFi.status() == WL_CONNECTED) {
       wifi_state = WIFI_STATE_SUCCESS;
       lv_obj_add_flag(objects.wifi_spinner, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(objects.wifi_success, LV_OBJ_FLAG_HIDDEN);
       lv_label_set_text(objects.detail_status_wifi_connection, "Berhasil Terhubung ke ");
 
-      lv_obj_add_flag(objects.panel_status_connection, LV_OBJ_FLAG_HIDDEN);
-      lv_obj_add_flag(objects.keyboard_password, LV_OBJ_FLAG_HIDDEN);
-      lv_obj_add_flag(objects.panel_input_wifi_password, LV_OBJ_FLAG_HIDDEN);
       Serial.println("Berhasil Terhubung bossqqq");
       lv_timer_del(wifi_timer);
       wifi_timer = NULL;
-    }
-    else if(elapsed >= WIFI_CONNECT_TIMEOUT){
+
+      bool is_auto_connect = lv_obj_has_state(objects.is_auto_connect, LV_STATE_CHECKED);
+      if(is_auto_connect){
+        Serial.println("SSID SAVED!");
+        preferences.putString("saved_SSID", WiFi.SSID());
+        preferences.putString("saved_Password", lv_textarea_get_text(objects.textarea_password));
+      }
+
+
+      lv_timer_create(wifi_status_conn_timer, 3000, NULL);
+      lv_textarea_set_text(objects.textarea_password, "");
+      disconnect_btn_interface_update();
+      wifi_settings_heading_interface_update();
+    } else if (elapsed >= WIFI_CONNECT_TIMEOUT) {
       wifi_state = WIFI_STATE_FAILED;
 
       WiFi.disconnect();
@@ -146,17 +194,23 @@ void WiFi_connect_tick(lv_timer_t * timer){
 
       lv_timer_del(wifi_timer);
       wifi_timer = NULL;
+
+      lv_timer_create(wifi_status_conn_timer, 3000, NULL);
+      lv_textarea_set_text(objects.textarea_password, "");
+      disconnect_btn_interface_update();
+      wifi_settings_heading_interface_update();
     }
   }
 }
 
-void WiFi_connect(lv_event_t * e){
-  Serial.println("TOMBOL KONEK DIPENCET");
+void WiFi_connect(lv_event_t* e) {
   const char* ssid = lv_label_get_text(objects.name_ssid);
   const char* password = lv_textarea_get_text(objects.textarea_password);
 
   lv_obj_remove_flag(objects.panel_status_connection, LV_OBJ_FLAG_HIDDEN);
+  lv_label_set_text(objects.detail_status_wifi_connection, "Menghubungkan ke ");
   lv_label_set_text(objects.wifi_ssid_status_connection, ssid);
+  lv_obj_remove_flag(objects.wifi_ssid_status_connection, LV_OBJ_FLAG_HIDDEN);
   lv_obj_remove_flag(objects.wifi_spinner, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(objects.wifi_failed, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(objects.wifi_success, LV_OBJ_FLAG_HIDDEN);
@@ -165,9 +219,26 @@ void WiFi_connect(lv_event_t * e){
   WiFi.begin(ssid, password);
   wifi_state = WIFI_STATE_CONNECTING;
   wifi_connect_start_ms = millis();
-  
-  if(wifi_timer != NULL){
+
+  if (wifi_timer != NULL) {
     lv_timer_del(wifi_timer);
   }
   wifi_timer = lv_timer_create(WiFi_connect_tick, 100, NULL);
+  // disconnect_btn_interface_update();
 }
+
+// String get_mac()
+// {
+//   uint8_t macBase[6];
+//   esp_err_t ret = esp_wifi_get_mac(WIFI_IF_STA, macBase);
+//   if (ret == ESP_OK)
+//   {
+//     char mac[18];
+//     snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x", macBase[0], macBase[1], macBase[2], macBase[3], macBase[4], macBase[5]);
+//     return String(mac);
+//   }
+//   else
+//   {
+//     return String("Failed to get MAC Address!");
+//   }
+// }

@@ -3,7 +3,10 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <UI_LCD.h>
-// #include <esp_wifi.h>
+#include <esp_wifi.h>
+
+#include "global.h"
+#include "event_handler.h"
 // #include "esp_event.h"
 // #include "esp_netif.h"
 // #include "nvs_flash.h"
@@ -21,6 +24,7 @@ typedef enum {
 extern void WiFi_scan();
 extern void WiFi_connect(lv_event_t * e);
 extern void WiFi_connect_tick(lv_timer_t * timer);
+extern String get_mac();
 
 // FUNCTION INI BUAT SETUP WIFI PAKE LIBRARY "esp_wifi.h" (Cara Kuno Low Level Setup WiFi ESP32)
 // ================================================================================================================================================================

@@ -1,6 +1,8 @@
 #include <lvgl.h>
 #include <TFT_eSPI.h>
 
+#include "event_handler.h"
+
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 240
 
