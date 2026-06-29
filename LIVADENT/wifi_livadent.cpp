@@ -1,9 +1,4 @@
-#include "lcd.h"
 #include "wifi_livadent.h"
-
-static wifi_conn_state_t wifi_state = WIFI_STATE_IDLE;
-static uint32_t wifi_connect_start_ms = 0;
-static lv_timer_t* wifi_timer = NULL;
 
 // FUNCTION INI BUAT SETUP WIFI PAKE LIBRARY "esp_wifi.h" (Cara Kuno Low Level Setup WiFi ESP32)
 // ================================================================================================================================================================
@@ -115,6 +110,10 @@ bool is_ssid_unique(char unique_ssid[][33], int jumlah_unique_ssid, const char* 
 
 void WiFi_scan() {
   int16_t apNum = WiFi.scanNetworks();
+  if (apNum < 0) {
+    Serial.println("ERROR WIFI SCANNED!");
+    return;
+  }
   Serial.println(apNum);
   char unique_ssid[apNum][33];
   int jumlah_unique_ssid = 0;
@@ -171,7 +170,7 @@ void WiFi_connect_tick(lv_timer_t* timer) {
       wifi_timer = NULL;
 
       bool is_auto_connect = lv_obj_has_state(objects.is_auto_connect, LV_STATE_CHECKED);
-      if(is_auto_connect){
+      if (is_auto_connect) {
         Serial.println("SSID SAVED!");
         preferences.putString("saved_SSID", WiFi.SSID());
         preferences.putString("saved_Password", lv_textarea_get_text(objects.textarea_password));
@@ -180,6 +179,10 @@ void WiFi_connect_tick(lv_timer_t* timer) {
 
       lv_timer_create(wifi_status_conn_timer, 3000, NULL);
       lv_textarea_set_text(objects.textarea_password, "");
+
+      Serial.println("Database Init...");
+      database_init();
+      local_server_init();
       disconnect_btn_interface_update();
       wifi_settings_heading_interface_update();
     } else if (elapsed >= WIFI_CONNECT_TIMEOUT) {

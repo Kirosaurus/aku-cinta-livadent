@@ -1,3 +1,4 @@
+#include "WiFiType.h"
 // #include "WiFiType.h"
 #include "event_handler.h"
 
@@ -30,7 +31,7 @@ void main_menu_loaded(lv_event_t* e) {
   }
 }
 
-void splash_screen_done_timer(lv_timer_t * timer){
+void splash_screen_done_timer(lv_timer_t* timer) {
   lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
 
   lv_timer_del(timer);
@@ -53,7 +54,25 @@ void splash_screen_loaded(lv_event_t* e) {
       Serial.print("WiFi is Auto Connecting ");
       Serial.println(saved_SSID.c_str());
       WiFi.begin(saved_SSID.c_str(), saved_Password.c_str());
+      wifi_state = WIFI_STATE_CONNECTING;
+      wifi_connect_start_ms = millis();
+
+      if (wifi_timer != NULL) {
+        lv_timer_del(wifi_timer);
+      }
+      wifi_timer = lv_timer_create(WiFi_connect_tick, 300, NULL);
     }
+
+    // if (WiFi.status() == WL_CONNECTED) {
+    //   lv_label_set_text(objects.process_init, "Database Init...");
+    //   Serial.println("Database Init...");
+    //   database_init();
+    //   local_server_init();
+    //   set_device_active();
+    // }
+    // else{
+    //   Serial.println("Not Connected Yet");
+    // }
 
     // Init sensor pH
     // Init sensor viskositas

@@ -1,6 +1,6 @@
 #include "firebase_livadent.h"
-#include "lcd.h"  // Urutannya harus gini, kalo misal lcd.h duluan nanti malah error FS.h, karena di dalem TFT_eSPI ada statement FS_NO_GLOBAL
 #include "wifi_livadent.h"
+#include "lcd.h"  // Urutannya harus gini, kalo misal lcd.h duluan nanti malah error FS.h, karena di dalem TFT_eSPI ada statement FS_NO_GLOBAL
 #include "global.h"
 
 #include <ESP.h>
@@ -12,7 +12,6 @@ void setup() {
   
   lcd_setup();
 
-  
   // wifi_setup();
   // wifi_scan();
   // Display total and free heap memory
@@ -30,8 +29,15 @@ void setup() {
 
 bool anu = 0;
 void loop() {
-  update_UI();
+  firebaseApp.loop();
+  server.handleClient();
+
+  if(firebaseApp.ready()){
+    set_device_active();
+  }
   
+  update_UI();
+  update_json();
 
 
   // if (firebaseApp.ready() && !anu)

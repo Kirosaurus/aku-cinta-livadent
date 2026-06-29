@@ -7,6 +7,8 @@
 
 #include "global.h"
 #include "event_handler.h"
+#include "firebase_livadent.h"
+#include "lcd.h"
 // #include "esp_event.h"
 // #include "esp_netif.h"
 // #include "nvs_flash.h"
@@ -14,12 +16,12 @@
 #define MAX_AP_RECORDS 10
 #define WIFI_CONNECT_TIMEOUT 10000 // 10 Detik Timeout (100 * 100 = 10000 milidetik / 10 detik) --> Rumus : 100 * n = t detik | Keterangan : n = nilai WIFI_CONNECT_TIMEOUT, t = waktu timeout yang diharapkan
 
-typedef enum {
-  WIFI_STATE_IDLE,
-  WIFI_STATE_CONNECTING,
-  WIFI_STATE_SUCCESS,
-  WIFI_STATE_FAILED
-} wifi_conn_state_t;
+// typedef enum {
+//   WIFI_STATE_IDLE,
+//   WIFI_STATE_CONNECTING,
+//   WIFI_STATE_SUCCESS,
+//   WIFI_STATE_FAILED
+// } wifi_conn_state_t;
 
 extern void WiFi_scan();
 extern void WiFi_connect(lv_event_t * e);

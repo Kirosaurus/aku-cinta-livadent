@@ -1,6 +1,7 @@
 #pragma once
 
 #include <lvgl.h>
+#include "firebase_livadent.h"
 #include "wifi_livadent.h"
 #include "global.h"
 
