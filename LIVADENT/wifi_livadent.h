@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <UI_LCD.h>
 #include <esp_wifi.h>
+#include <LittleFS.h>
 
 #include "global.h"
 #include "event_handler.h"

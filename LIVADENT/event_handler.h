@@ -1,6 +1,8 @@
 #pragma once
 
 #include <lvgl.h>
+#include <LittleFS.h>
+
 #include "firebase_livadent.h"
 #include "wifi_livadent.h"
 #include "global.h"
@@ -15,3 +17,8 @@ extern void disconnect_btn_interface_update();
 extern void disconnect_btn(lv_event_t * e);
 extern void wifi_settings_heading_interface_update();
 extern void splash_screen_loaded(lv_event_t* e);
+extern void wifi_cancel_btn(lv_event_t* e);
+extern void mulai_btn(lv_event_t* e);
+extern void back_btn_screening(lv_event_t * e);
+extern void screening_loaded(lv_event_t * e);
+extern void start_stop_screening(lv_event_t * e);

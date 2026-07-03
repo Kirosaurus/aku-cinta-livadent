@@ -114,8 +114,7 @@ void WiFi_scan() {
     Serial.println("ERROR WIFI SCANNED!");
     return;
   }
-  Serial.println(apNum);
-  char unique_ssid[apNum][33];
+  char unique_ssid[MAX_AP_RECORDS][33];
   int jumlah_unique_ssid = 0;
   lv_obj_t* btn;
 
@@ -134,14 +133,18 @@ void WiFi_scan() {
       lv_obj_add_event_cb(btn, list_btn_wifi_network, LV_EVENT_CLICKED, NULL);
 
       jumlah_unique_ssid++;
-      Serial.println("Unique");
-    } else {
-      Serial.println("Not Unique");
+      if (jumlah_unique_ssid >= MAX_AP_RECORDS) {
+        break;
+      }
     }
   }
 
   char nAP[25];
-  sprintf(nAP, "%d Wi-Fi Terdeteksi", jumlah_unique_ssid);
+  if (jumlah_unique_ssid >= 10) {
+    sprintf(nAP, "%d Wi-Fi Terdeteksi (MAX)", jumlah_unique_ssid);
+  } else {
+    sprintf(nAP, "%d Wi-Fi Terdeteksi", jumlah_unique_ssid);
+  }
   lv_label_set_text(objects.wifi_status, nAP);
 
   WiFi.scanDelete();
@@ -217,7 +220,6 @@ void WiFi_connect(lv_event_t* e) {
   lv_obj_remove_flag(objects.wifi_spinner, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(objects.wifi_failed, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(objects.wifi_success, LV_OBJ_FLAG_HIDDEN);
-  update_UI();
 
   WiFi.begin(ssid, password);
   wifi_state = WIFI_STATE_CONNECTING;

@@ -58,6 +58,16 @@ void lcd_setup(){
   lv_obj_add_event_cb(objects.disconnect_wifi_btn, disconnect_btn, LV_EVENT_CLICKED, NULL);
   
   lv_obj_add_event_cb(objects.splash_screen, splash_screen_loaded, LV_EVENT_SCREEN_LOADED, NULL);
+  
+  lv_obj_add_event_cb(objects.cancel_btn, wifi_cancel_btn, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.back_btn_screening, back_btn_screening, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.mulai_btn, mulai_btn, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.screening, screening_loaded, LV_EVENT_SCREEN_LOADED, NULL);
+
+  lv_obj_add_event_cb(objects.start_stop_screening_btn, start_stop_screening, LV_EVENT_CLICKED, NULL);
 
   tft.setRotation(1);
 }

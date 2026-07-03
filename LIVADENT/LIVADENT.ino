@@ -1,30 +1,39 @@
 #include "firebase_livadent.h"
 #include "wifi_livadent.h"
 #include "lcd.h"  // Urutannya harus gini, kalo misal lcd.h duluan nanti malah error FS.h, karena di dalem TFT_eSPI ada statement FS_NO_GLOBAL
+#include "mlp.h"
 #include "global.h"
+#include "esp_heap_caps.h"
 
 #include <ESP.h>
 
 void setup() {
   Serial.begin(115200);
 
-  preferences.begin("wifi", false);
+  if (!LittleFS.begin(true)) {
+    Serial.println("LittleFS gagal dimount");
+  }
   
+  preferences.begin("wifi", false);
+
   lcd_setup();
+  mlp_init();
+  init_json(); // No Mac Address dan No IP kalo misal egak ada auto connect SSID (only "on_progress" attribute)
+  WiFi.setSleep(false);
 
   // wifi_setup();
   // wifi_scan();
-  // Display total and free heap memory
+
   Serial.print("Total Heap: ");
   Serial.println(ESP.getHeapSize());
   Serial.print("Free Heap: ");
   Serial.println(ESP.getFreeHeap());
+  Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
 
-  // Display PSRAM details (if available)
-  Serial.print("Total PSRAM: ");
-  Serial.println(ESP.getPsramSize());
-  Serial.print("Free PSRAM: ");
-  Serial.println(ESP.getFreePsram());
+  // Serial.print("Total PSRAM: ");
+  // Serial.println(ESP.getPsramSize());
+  // Serial.print("Free PSRAM: ");
+  // Serial.println(ESP.getFreePsram());
 }
 
 bool anu = 0;
@@ -32,10 +41,12 @@ void loop() {
   firebaseApp.loop();
   server.handleClient();
 
-  if(firebaseApp.ready()){
+  if (firebaseApp.ready() && !anu) {
     set_device_active();
+    // predict_test();
+    anu = 1;
   }
-  
+
   update_UI();
   update_json();
 

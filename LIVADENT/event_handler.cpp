@@ -1,5 +1,4 @@
 #include "WiFiType.h"
-// #include "WiFiType.h"
 #include "event_handler.h"
 
 // EVENT HANDLER SECTION!!
@@ -107,6 +106,28 @@ void wifi_settings_loaded(lv_event_t* e) {
     }
   }
   wifi_settings_heading_interface_update();
+}
+
+void screening_loaded(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_SCREEN_LOADED) {
+    File file = LittleFS.open(CONFIG_PATH, "r");
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, file);
+    file.close();
+
+    if (WiFi.status() != WL_CONNECTED && doc["on_going"] != true) {  // && Ketika Tidak lagi On progress
+      lv_obj_remove_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
+    }
+    else if(WiFi.status() == WL_CONNECTED && doc["on_going"] == true){
+      lv_obj_add_flag(objects.offline_indicator, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.container_screening_btn, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
+    }
+  }
 }
 
 void disconnect_btn_interface_update() {
@@ -224,6 +245,69 @@ void back_wifi_btn(lv_event_t* e) {
 
   if (code == LV_EVENT_CLICKED) {
     lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
+  }
+}
+
+void wifi_cancel_btn(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_CLICKED) {
+    lv_textarea_set_text(objects.textarea_password, "");
+    lv_obj_add_flag(objects.panel_input_wifi_password, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(objects.keyboard_password, LV_OBJ_FLAG_HIDDEN);
+  }
+}
+
+void mulai_btn(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_CLICKED) {
+    lv_scr_load_anim(objects.screening, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
+  }
+}
+
+void back_btn_screening(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_CLICKED) {
+    lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
+  }
+}
+
+void start_stop_screening(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  File file = LittleFS.open(CONFIG_PATH, "r");
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, file);
+  file.close();
+  if (code == LV_EVENT_CLICKED) {
+    if (doc["on_going"] == false) {
+      Serial.println("Skrining Berjalan!");
+      lv_obj_add_flag(objects.back_btn_screening, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.arrow_start_screening, LV_OBJ_FLAG_HIDDEN);
+
+      lv_label_set_text(objects.start_stop_screening_label, "Hentikan Skrining");
+      lv_obj_set_style_bg_color(objects.start_stop_screening_btn, lv_color_hex(0xEB5757), NULL);
+      doc["on_going"] = true;
+
+      lv_obj_remove_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
+    } else {
+      Serial.println("Skrining Berhenti!");
+      lv_obj_remove_flag(objects.back_btn_screening, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(objects.arrow_start_screening, LV_OBJ_FLAG_HIDDEN);
+
+      lv_label_set_text(objects.start_stop_screening_label, "Mulai Skrining");
+      lv_obj_set_style_bg_color(objects.start_stop_screening_btn, lv_color_hex(0x2196f3), NULL);
+      doc["on_going"] = false;
+
+      lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
+    }
+    File write_file = LittleFS.open(CONFIG_PATH, "w");
+    serializeJson(doc, write_file);
+    write_file.close();
   }
 }
 

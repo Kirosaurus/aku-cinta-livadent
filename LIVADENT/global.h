@@ -7,6 +7,8 @@ extern Preferences preferences;
 extern String saved_SSID;
 extern String saved_Password;
 
+extern bool web_app_timeout;
+
 typedef enum {
   WIFI_STATE_IDLE,
   WIFI_STATE_CONNECTING,
@@ -17,3 +19,5 @@ typedef enum {
 extern wifi_conn_state_t wifi_state;
 extern uint32_t wifi_connect_start_ms;
 extern lv_timer_t* wifi_timer;
+
+extern const char* CONFIG_PATH;
