@@ -173,6 +173,7 @@ void WiFi_connect_tick(lv_timer_t* timer) {
       wifi_timer = NULL;
 
       bool is_auto_connect = lv_obj_has_state(objects.is_auto_connect, LV_STATE_CHECKED);
+      
       if (is_auto_connect) {
         Serial.println("SSID SAVED!");
         preferences.putString("saved_SSID", WiFi.SSID());

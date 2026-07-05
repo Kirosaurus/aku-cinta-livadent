@@ -9,5 +9,5 @@
 #include <Arduino.h>
 using namespace std;
 
-extern void predict_test();
+extern uint8_t predict_test(float ph, float viskositas);
 extern void mlp_init();

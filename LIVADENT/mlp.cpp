@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "mlp.h"
 
 namespace {
@@ -59,7 +60,7 @@ void mlp_init() {
   MicroPrintf("Output type: %d", output->type);
 }
 
-void predict_test() {
+uint8_t predict_test(float ph, float viskositas) {
   //   uniform_real_distribution<> distr(lower_pH, upper_pH);
   //   double random_number = distr(gen);
   //   uniform_real_distribution<> distr2(lower_visc, upper_visc);
@@ -67,8 +68,6 @@ void predict_test() {
 
   //   double ph = random_number;
   //   float viskositas = random_number_visc;
-  const double ph = 7.2;
-  const float viskositas = 1.18;
 
     if (input->type == kTfLiteInt8) {
       input->data.int8[0] = static_cast<int8_t>(
@@ -86,14 +85,14 @@ void predict_test() {
 
     else {
       MicroPrintf("Tipe input belum didukung");
-      return;
+      return 3;
     }
 
   TfLiteStatus invoke_status = interpreter->Invoke();
 
   if (invoke_status != kTfLiteOk) {
     MicroPrintf("Invoke failed");
-    return;
+    return 3;
   }
 
   float skor[3];
@@ -113,7 +112,7 @@ void predict_test() {
 
     else {
       MicroPrintf("Tipe output belum didukung");
-      return;
+      return 3;
     }
 
   int prediksi = 0;
@@ -140,6 +139,8 @@ void predict_test() {
   } else {
     MicroPrintf("Prediksi: Risiko tinggi");
   }
+
+  return prediksi;
 
   delay(1000);
 }

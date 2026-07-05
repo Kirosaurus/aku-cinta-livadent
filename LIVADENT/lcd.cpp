@@ -68,6 +68,12 @@ void lcd_setup(){
   lv_obj_add_event_cb(objects.screening, screening_loaded, LV_EVENT_SCREEN_LOADED, NULL);
 
   lv_obj_add_event_cb(objects.start_stop_screening_btn, start_stop_screening, LV_EVENT_CLICKED, NULL);
+  
+  lv_obj_add_event_cb(objects.hide_password_btn, hide_password_btn, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.result, result_loaded, LV_EVENT_SCREEN_LOADED, NULL);
+
+  lv_obj_add_event_cb(objects.result_done_btn, done_result_btn, LV_EVENT_CLICKED, NULL);
 
   tft.setRotation(1);
 }

@@ -21,3 +21,7 @@ extern uint32_t wifi_connect_start_ms;
 extern lv_timer_t* wifi_timer;
 
 extern const char* CONFIG_PATH;
+
+extern float ph_sensor;
+extern float visc_sensor;
+extern uint8_t mlp_risk_label;

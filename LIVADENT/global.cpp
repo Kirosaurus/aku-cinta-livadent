@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "global.h"
 
 Preferences preferences;
@@ -12,3 +13,7 @@ uint32_t wifi_connect_start_ms = 0;
 lv_timer_t* wifi_timer = NULL;
 
 const char* CONFIG_PATH = "/web_app_config.json";
+
+float ph_sensor = -1;
+float visc_sensor = -1;
+uint8_t mlp_risk_label = 3;

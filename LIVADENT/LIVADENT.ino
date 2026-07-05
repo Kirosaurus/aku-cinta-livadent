@@ -3,6 +3,7 @@
 #include "lcd.h"  // Urutannya harus gini, kalo misal lcd.h duluan nanti malah error FS.h, karena di dalem TFT_eSPI ada statement FS_NO_GLOBAL
 #include "mlp.h"
 #include "global.h"
+#include "hardware_workflow.h"
 #include "esp_heap_caps.h"
 
 #include <ESP.h>

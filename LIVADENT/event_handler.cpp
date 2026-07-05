@@ -1,7 +1,11 @@
 #include "WiFiType.h"
 #include "event_handler.h"
 
+bool is_hide = true;
 // EVENT HANDLER SECTION!!
+
+void display_result() {
+}
 
 void main_menu_loaded(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
@@ -26,6 +30,55 @@ void main_menu_loaded(lv_event_t* e) {
       lv_label_set_text(objects.mulai_text, "Mulai Mode Offline");
       lv_obj_remove_flag(objects.mulai_btn, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.is_prototype_ready_container, LV_OBJ_FLAG_HIDDEN);
+    }
+  }
+}
+
+void result_loaded(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  File file = LittleFS.open(CONFIG_PATH, "r");
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, file);
+  file.close();
+  doc["on_going"] = false;
+  File write_file = LittleFS.open(CONFIG_PATH, "w");
+  serializeJson(doc, write_file);
+  write_file.close();
+  if (code == LV_EVENT_SCREEN_LOADED) {
+    if (WiFi.status() != WL_CONNECTED) {
+      lv_image_set_src(objects.wifi_indicator_screening, &img_no_connection);
+      lv_label_set_text(objects.wifi_status_screening, "Tidak Terhubung ke");
+      lv_label_set_text(objects.wifi_ssid_screening, "Wi-Fi");
+    } else {
+      lv_image_set_src(objects.wifi_indicator_screening, &img_connected);
+      lv_label_set_text(objects.wifi_status_screening, "Terhubung ke");
+      lv_label_set_text(objects.wifi_ssid_screening, WiFi.SSID().c_str());
+    }
+
+    char ph_value[10];
+    char visc_value[10];
+    snprintf(ph_value, sizeof(ph_value), "%.2f", ph_sensor);
+    snprintf(visc_value, sizeof(visc_value), "%.2f cP", visc_sensor);
+    lv_label_set_text(objects.ph_value, ph_value);
+    lv_label_set_text(objects.visc_value, visc_value);
+
+    if (mlp_risk_label == 0) {
+      lv_image_set_src(objects.risk_indicator, &img_low_risk);
+      lv_obj_set_style_bg_color(objects.risk_bg, lv_color_hex(0xC8F4DB), NULL);
+      lv_label_set_text(objects.risk_label, "Risiko Karies Gigi Rendah");
+      lv_label_set_text(objects.risk_desc, "Kondisi gigi dalam keadaan baik");
+    } else if (mlp_risk_label == 1) {
+      lv_image_set_src(objects.risk_indicator, &img_medium_risk);
+      lv_obj_set_style_bg_color(objects.risk_bg, lv_color_hex(0xFFE080), NULL);
+      lv_label_set_text(objects.risk_label, "Risiko Karies Gigi Sedang");
+      lv_label_set_text(objects.risk_desc, "Terapkan langkah preventif");
+    } else if (mlp_risk_label == 2) {
+      lv_image_set_src(objects.risk_indicator, &img_high_risk);
+      lv_obj_set_style_bg_color(objects.risk_bg, lv_color_hex(0xFFD9D9), NULL);
+      lv_label_set_text(objects.risk_label, "Risiko Karies Gigi Tinggi");
+      lv_label_set_text(objects.risk_desc, "Waspadalah Boloooo");
+    } else {
+      lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
     }
   }
 }
@@ -112,6 +165,16 @@ void screening_loaded(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
 
   if (code == LV_EVENT_SCREEN_LOADED) {
+    if (WiFi.status() != WL_CONNECTED) {
+      lv_image_set_src(objects.wifi_indicator_screening, &img_no_connection);
+      lv_label_set_text(objects.wifi_status_screening, "Tidak Terhubung ke");
+      lv_label_set_text(objects.wifi_ssid_screening, "Wi-Fi");
+    } else {
+      lv_image_set_src(objects.wifi_indicator_screening, &img_connected);
+      lv_label_set_text(objects.wifi_status_screening, "Terhubung ke");
+      lv_label_set_text(objects.wifi_ssid_screening, WiFi.SSID().c_str());
+    }
+
     File file = LittleFS.open(CONFIG_PATH, "r");
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, file);
@@ -120,12 +183,39 @@ void screening_loaded(lv_event_t* e) {
     if (WiFi.status() != WL_CONNECTED && doc["on_going"] != true) {  // && Ketika Tidak lagi On progress
       lv_obj_remove_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
-    }
-    else if(WiFi.status() == WL_CONNECTED && doc["on_going"] == true){
+
+      lv_obj_remove_flag(objects.back_btn_screening, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(objects.arrow_start_screening, LV_OBJ_FLAG_HIDDEN);
+
+      lv_label_set_text(objects.start_stop_screening_label, "Mulai Skrining");
+      lv_obj_set_style_bg_color(objects.start_stop_screening_btn, lv_color_hex(0x2196f3), NULL);
+    } else if (WiFi.status() == WL_CONNECTED && doc["on_going"] == true) {
       lv_obj_add_flag(objects.offline_indicator, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.container_screening_btn, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
+
+      lv_obj_add_flag(objects.back_btn_screening, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.arrow_start_screening, LV_OBJ_FLAG_HIDDEN);
+
+      lv_label_set_text(objects.start_stop_screening_label, "Hentikan Skrining");
+      lv_obj_set_style_bg_color(objects.start_stop_screening_btn, lv_color_hex(0xEB5757), NULL);
+    }
+  }
+}
+
+void hide_password_btn(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_CLICKED) {
+    if (is_hide) {
+      lv_image_set_src(objects.hide_password_btn, &img_eye);
+      lv_textarea_set_password_mode(objects.textarea_password, false);
+      is_hide = false;
+    } else {
+      lv_image_set_src(objects.hide_password_btn, &img_eye_hide);
+      lv_textarea_set_password_mode(objects.textarea_password, true);
+      is_hide = true;
     }
   }
 }
@@ -139,6 +229,7 @@ void disconnect_btn_interface_update() {
     lv_obj_add_flag(objects.disconnect_wifi_btn, LV_OBJ_FLAG_CLICKABLE);
   }
 }
+
 
 // bool checkbox_auto_connect(lv_event_t * e){
 //   lv_event_code_t code = lv_event_get_code(e);
@@ -255,6 +346,11 @@ void wifi_cancel_btn(lv_event_t* e) {
     lv_textarea_set_text(objects.textarea_password, "");
     lv_obj_add_flag(objects.panel_input_wifi_password, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(objects.keyboard_password, LV_OBJ_FLAG_HIDDEN);
+
+    lv_obj_clear_state(objects.is_auto_connect, LV_STATE_CHECKED);
+    lv_image_set_src(objects.hide_password_btn, &img_eye_hide);
+    lv_textarea_set_password_mode(objects.textarea_password, true);
+    is_hide = true;
   }
 }
 
@@ -272,6 +368,11 @@ void back_btn_screening(lv_event_t* e) {
   if (code == LV_EVENT_CLICKED) {
     lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
   }
+}
+
+void process_timer(lv_timer_t* timer) {
+  process();
+  lv_timer_del(timer);
 }
 
 void start_stop_screening(lv_event_t* e) {
@@ -293,6 +394,9 @@ void start_stop_screening(lv_event_t* e) {
 
       lv_obj_remove_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
+
+      // Prosedur Mulai Skrining (Gerakin sensor, servo, dll.) Di dalamnya
+      lv_timer_create(process_timer, 500, NULL);
     } else {
       Serial.println("Skrining Berhenti!");
       lv_obj_remove_flag(objects.back_btn_screening, LV_OBJ_FLAG_HIDDEN);
@@ -308,6 +412,17 @@ void start_stop_screening(lv_event_t* e) {
     File write_file = LittleFS.open(CONFIG_PATH, "w");
     serializeJson(doc, write_file);
     write_file.close();
+  }
+}
+
+void done_result_btn(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_CLICKED) {
+    mlp_risk_label = 3;
+    ph_sensor = -1;
+    visc_sensor = -1;
+    lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
   }
 }
 
