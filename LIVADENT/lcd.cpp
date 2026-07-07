@@ -22,7 +22,7 @@ lv_obj_t *touch_debug_label;
 uint32_t lastTick = 0;
 
 void lcd_setup(){
-    lv_init();
+  lv_init();
 
   tft.begin();
   tft.setRotation(1);
@@ -75,7 +75,6 @@ void lcd_setup(){
 
   lv_obj_add_event_cb(objects.result_done_btn, done_result_btn, LV_EVENT_CLICKED, NULL);
 
-  tft.setRotation(1);
 }
 
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
