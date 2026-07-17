@@ -1,17 +1,17 @@
-const int samples = 1;
+const int samples = 10000;
 
 #include <TFT_eSPI.h>
 
 #define SECOND_OFFSET 30000
 
-const double v7 = 0.85;
-const double v4  = 0.94;
+const double v7 = 2.39;
+const double v4  = 2.60;
 const double p7 = 6.86;
 const double p4 = 4.01;
 
 const float slope = (p7-p4) / (v7-v4);
 const float offset = p4 - (slope*v4);
-
+ 
 TFT_eSPI tft = TFT_eSPI();
 
 // void get_ph() {
@@ -50,7 +50,8 @@ void setup() {
 }
 
 void loop() {
-  while (millis() <= SECOND_OFFSET) {
+  // while (millis() <= SECOND_OFFSET) {
+    double totVolt = 0.00;
     double volt = 0.00;
     double totpH = 0.00;
     double pH = 0.00;
@@ -59,20 +60,21 @@ void loop() {
       // pH = -35.625 * volt + 37.85375;
       pH = (slope * volt + offset);
       totpH += pH;
+      totVolt += volt;
       // i++;
     }
 
     Serial.print("Volt : ");
-    Serial.println(volt);
+    Serial.println(volt / samples,10);
     Serial.print("pH : ");
-    Serial.println(totpH / samples);
+    Serial.println(totpH / samples,10);
 
     tft.setCursor(0, 0);
     tft.fillScreen(ILI9341_BLUE);
     tft.print("Volt : ");
-    tft.println(volt);
+    tft.println(volt / samples,10);
     tft.print("pH : ");
-    tft.println(totpH / samples);
+    tft.println(totpH / samples,10);
     delay(100);
-  }
+  // }
 }

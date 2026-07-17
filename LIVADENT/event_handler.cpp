@@ -9,6 +9,7 @@ void display_result() {
 
 void main_menu_loaded(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_add_flag(objects.offline_warning, LV_OBJ_FLAG_HIDDEN);
 
   if (code == LV_EVENT_SCREEN_LOADED) {
     if (WiFi.status() == WL_CONNECTED) {
@@ -53,6 +54,13 @@ void result_loaded(lv_event_t* e) {
       lv_image_set_src(objects.wifi_indicator_screening, &img_connected);
       lv_label_set_text(objects.wifi_status_screening, "Terhubung ke");
       lv_label_set_text(objects.wifi_ssid_screening, WiFi.SSID().c_str());
+    }
+
+    if (ph_sensor < 0 || ph_sensor > 14 || visc_sensor < 0 || visc_sensor > 5) {  // Aku menganggap kalo viskositas lebih dari 5 udah egak normal
+      lv_scr_load_anim(objects.screening, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
+      lv_obj_remove_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(objects.back_in_second, LV_OBJ_FLAG_HIDDEN);
+      return;
     }
 
     char ph_value[10];
@@ -183,6 +191,8 @@ void screening_loaded(lv_event_t* e) {
     if (WiFi.status() != WL_CONNECTED && doc["on_going"] != true) {  // && Ketika Tidak lagi On progress
       lv_obj_remove_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.back_in_second, LV_OBJ_FLAG_HIDDEN);
 
       lv_obj_remove_flag(objects.back_btn_screening, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(objects.arrow_start_screening, LV_OBJ_FLAG_HIDDEN);
@@ -193,6 +203,8 @@ void screening_loaded(lv_event_t* e) {
       lv_obj_add_flag(objects.offline_indicator, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.container_screening_btn, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_add_flag(objects.back_in_second, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
 
       lv_obj_add_flag(objects.back_btn_screening, LV_OBJ_FLAG_HIDDEN);
@@ -358,7 +370,23 @@ void mulai_btn(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
 
   if (code == LV_EVENT_CLICKED) {
+    lv_obj_remove_flag(objects.offline_warning, LV_OBJ_FLAG_HIDDEN);
+  }
+}
+
+void yes_screening_btn(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_CLICKED) {
     lv_scr_load_anim(objects.screening, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
+  }
+}
+
+void no_screening_btn(lv_event_t* e) {
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_CLICKED) {
+    lv_obj_add_flag(objects.offline_warning, LV_OBJ_FLAG_HIDDEN);
   }
 }
 

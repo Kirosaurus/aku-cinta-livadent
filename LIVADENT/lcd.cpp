@@ -11,7 +11,7 @@
 // #include "UI_LCD/vars.h"
 #include <UI_LCD.h>
 
-uint32_t draw_buf[DRAW_BUF_SIZE / 4];
+uint32_t draw_buf[DRAW_BUF_SIZE / 5];
 
 TFT_eSPI tft = TFT_eSPI();
 uint16_t calData[5] = { 410, 3430, 323, 3386, 7 };
@@ -74,6 +74,10 @@ void lcd_setup(){
   lv_obj_add_event_cb(objects.result, result_loaded, LV_EVENT_SCREEN_LOADED, NULL);
 
   lv_obj_add_event_cb(objects.result_done_btn, done_result_btn, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.continue_offline_screening,  yes_screening_btn, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.back_offline_screening,  no_screening_btn, LV_EVENT_CLICKED, NULL);
 
 }
 

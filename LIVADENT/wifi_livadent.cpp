@@ -114,6 +114,7 @@ void WiFi_scan() {
     Serial.println("ERROR WIFI SCANNED!");
     return;
   }
+  Serial.println(apNum);
   char unique_ssid[MAX_AP_RECORDS][33];
   int jumlah_unique_ssid = 0;
   lv_obj_t* btn;

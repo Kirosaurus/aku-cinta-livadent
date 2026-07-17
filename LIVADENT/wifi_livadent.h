@@ -14,7 +14,7 @@
 // #include "esp_netif.h"
 // #include "nvs_flash.h"
 
-#define MAX_AP_RECORDS 10
+#define MAX_AP_RECORDS 5
 #define WIFI_CONNECT_TIMEOUT 10000 // 10 Detik Timeout (100 * 100 = 10000 milidetik / 10 detik) --> Rumus : 100 * n = t detik | Keterangan : n = nilai WIFI_CONNECT_TIMEOUT, t = waktu timeout yang diharapkan
 
 // typedef enum {

@@ -10,10 +10,18 @@
 
 void setup() {
   Serial.begin(115200);
+  
+  pinMode(PIN_SENSOR_PH, INPUT);
 
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS gagal dimount");
   }
+
+  if(!ads.begin()){
+    Serial.println("ADS Gagal Inisialisasi");
+  }
+
+  ads.setGain(GAIN_TWOTHIRDS);
   
   preferences.begin("wifi", false);
 

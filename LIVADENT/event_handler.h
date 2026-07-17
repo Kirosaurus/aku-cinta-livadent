@@ -26,3 +26,5 @@ extern void start_stop_screening(lv_event_t * e);
 extern void hide_password_btn(lv_event_t* e);
 extern void result_loaded(lv_event_t * e);
 extern void done_result_btn(lv_event_t* e);
+extern void no_screening_btn(lv_event_t* e);
+extern void yes_screening_btn(lv_event_t* e);
