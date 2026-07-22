@@ -24,6 +24,7 @@ void init_json() {
   doc["is_visc"] = true;  // Ini juga
   doc["on_going"] = false;
   doc["web_app"] = false;
+  doc["ready"] = false;
 
   File file = LittleFS.open(CONFIG_PATH, "w");
   serializeJsonPretty(doc, file);
@@ -64,6 +65,7 @@ void update_json() {
 }
 
 void web_app_connect() {
+  send_cors_headers();
   JsonDocument doc;
   File file = LittleFS.open(CONFIG_PATH, "r");
   DeserializationError read_json_error = deserializeJson(doc, file);

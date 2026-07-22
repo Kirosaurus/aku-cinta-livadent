@@ -4,15 +4,18 @@
 #include <LittleFS.h>
 #include <lvgl.h>
 #include <UI_LCD.h>
-// #include <vector>
+#include <math.h>
 #include <Adafruit_ADS1X15.h>
+#include <AccelStepper.h>
+#include <ArduinoJson.h>
 
 #include "mlp.h"
-#include "esp_random.h"
+// #include "esp_random.h"
 #include "global.h"
 
-#define SECOND_OFFSET 30000
+#define SCAN_TIMEOUT 30000
 #define PIN_SENSOR_PH 34
+#define FAILED_TIMEOUT 10000
 
 using namespace std;
 
