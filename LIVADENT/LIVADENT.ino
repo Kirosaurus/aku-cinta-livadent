@@ -6,14 +6,21 @@
 #include "hardware_workflow.h"
 #include "esp_heap_caps.h"
 
-#include <ESP.h>
+// #include <ESP.h>
 
 void setup() {
   Serial.begin(115200);
+  while(!Serial){
+    
+  }
+  
+  pinMode(PIN_SENSOR_PH, INPUT);
 
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS gagal dimount");
   }
+
+  ads.setGain(GAIN_TWOTHIRDS);
   
   preferences.begin("wifi", false);
 
@@ -25,10 +32,10 @@ void setup() {
   // wifi_setup();
   // wifi_scan();
 
-  Serial.print("Total Heap: ");
-  Serial.println(ESP.getHeapSize());
-  Serial.print("Free Heap: ");
-  Serial.println(ESP.getFreeHeap());
+  // Serial.print("Total Heap: ");
+  // Serial.println(ESP.getHeapSize());
+  // Serial.print("Free Heap: ");
+  // Serial.println(ESP.getFreeHeap());
   Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
 
   // Serial.print("Total PSRAM: ");

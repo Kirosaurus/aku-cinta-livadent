@@ -108,12 +108,13 @@ bool is_ssid_unique(char unique_ssid[][33], int jumlah_unique_ssid, const char* 
   return true;
 }
 
-void WiFi_scan() {
+void IRAM_ATTR WiFi_scan() {
   int16_t apNum = WiFi.scanNetworks();
   if (apNum < 0) {
     Serial.println("ERROR WIFI SCANNED!");
     return;
   }
+  Serial.println(apNum);
   char unique_ssid[MAX_AP_RECORDS][33];
   int jumlah_unique_ssid = 0;
   lv_obj_t* btn;
@@ -147,7 +148,17 @@ void WiFi_scan() {
   }
   lv_label_set_text(objects.wifi_status, nAP);
 
+  // Serial.print("Total Heap: ");
+  // Serial.println(ESP.getHeapSize());
+  // Serial.print("Free Heap: ");
+  // Serial.println(ESP.getFreeHeap());
+  Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
   WiFi.scanDelete();
+  // Serial.print("Total Heap: ");
+  // Serial.println(ESP.getHeapSize());
+  // Serial.print("Free Heap: ");
+  // Serial.println(ESP.getFreeHeap());
+  Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
 }
 
 void wifi_status_conn_timer(lv_timer_t* timer) {
@@ -173,7 +184,7 @@ void WiFi_connect_tick(lv_timer_t* timer) {
       wifi_timer = NULL;
 
       bool is_auto_connect = lv_obj_has_state(objects.is_auto_connect, LV_STATE_CHECKED);
-      
+
       if (is_auto_connect) {
         Serial.println("SSID SAVED!");
         preferences.putString("saved_SSID", WiFi.SSID());
