@@ -10,10 +10,9 @@
 
 void setup() {
   Serial.begin(115200);
-  while(!Serial){
-    
+  while (!Serial) {
   }
-  
+
   pinMode(PIN_SENSOR_PH, INPUT);
 
   if (!LittleFS.begin(true)) {
@@ -21,12 +20,12 @@ void setup() {
   }
 
   ads.setGain(GAIN_TWOTHIRDS);
-  
+
   preferences.begin("wifi", false);
 
   lcd_setup();
   mlp_init();
-  init_json(); // No Mac Address dan No IP kalo misal egak ada auto connect SSID (only "on_progress" attribute)
+  init_json();  // No Mac Address dan No IP kalo misal egak ada auto connect SSID (only "on_progress" attribute)
   WiFi.setSleep(false);
 
   // wifi_setup();
@@ -48,6 +47,11 @@ bool anu = 0;
 void loop() {
   firebaseApp.loop();
   server.handleClient();
+  // Serial.println("Still Online");
+
+  if (WiFi.status() == WL_CONNECTED) {
+    update_json();
+  }
 
   if (firebaseApp.ready() && !anu) {
     set_device_active();
@@ -56,7 +60,6 @@ void loop() {
   }
 
   update_UI();
-  update_json();
 
 
   // if (firebaseApp.ready() && !anu)

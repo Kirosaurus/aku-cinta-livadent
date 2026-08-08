@@ -1,103 +1,5 @@
 #include "wifi_livadent.h"
 
-// FUNCTION INI BUAT SETUP WIFI PAKE LIBRARY "esp_wifi.h" (Cara Kuno Low Level Setup WiFi ESP32)
-// ================================================================================================================================================================
-// void wifi_setup(){
-//   nvs_flash_init();
-//   esp_netif_init();
-//   esp_event_loop_create_default();
-//   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-//   esp_err_t err = esp_wifi_init(&cfg);
-//   if(err != ESP_OK){
-//     Serial.println("Error Init Wifi");
-//     return;
-//   }
-
-//   // esp_wifi_set_storage(WIFI_STORAGE_RAM);
-
-//   err = esp_wifi_set_mode(WIFI_MODE_STA);
-//   if(err != ESP_OK){
-//     Serial.println("Error Set WiFi Mode");
-//     return;
-//   }
-
-//   err = esp_wifi_start();
-//   if (err != ESP_OK)
-//   {
-//     Serial.print("esp_wifi_start error: ");
-//     Serial.println(esp_err_to_name(err));
-//     return;
-//   }
-
-//   Serial.println("Berhasil Setup Wifi!");
-// }
-
-// void wifi_scan(){
-//   esp_err_t err = esp_wifi_scan_start(NULL, true);
-//   if(err != ESP_OK){
-//     Serial.print("esp_wifi_scan_start error : ");
-//     Serial.println(esp_err_to_name(err));
-//     return;
-//   }
-
-//   uint16_t apNum  = MAX_AP_RECORDS;
-//   wifi_ap_record_t apRecords[MAX_AP_RECORDS];
-//   memset(apRecords, 0, sizeof(apRecords));
-
-//   err = esp_wifi_scan_get_ap_records(&apNum, apRecords);
-//   if(err != ESP_OK){
-//     Serial.print("esp_wifi_scan_get_ap_record error : ");
-//     Serial.println(esp_err_to_name(err));
-//     return;
-//   }
-
-//   lv_obj_clean(objects.wifi_list);
-
-//   if(apNum > 0){
-//     print_ssid(apRecords, apNum);
-//   }
-//   else{
-//     Serial.println("Ga ada WiFi yang kedetect bejir");
-//   }
-// }
-
-// bool ssid_is_unique(wifi_ap_record_t uniqueRecords[], uint16_t uniqueCount, char* ssid){
-//   for(uint16_t i=0;i<uniqueCount;i++){
-//     if(strcmp((char*)uniqueRecords[i].ssid, ssid) == 0){
-//       return false;
-//     }
-//   }
-//   return true;
-// }
-
-// void print_ssid(wifi_ap_record_t apRecords[], uint16_t apNum){
-//   wifi_ap_record_t uniqueRecords[MAX_AP_RECORDS];
-//   uint16_t uniqueCount = 0;
-
-//   lv_obj_t * btn;
-
-//   for(uint16_t i = 0;i<apNum;i++){
-//     if(strlen((char *)apRecords[i].ssid) == 0) continue;
-
-//     if(ssid_is_unique(uniqueRecords, uniqueCount, (char*)apRecords[i].ssid)){
-//       btn = lv_list_add_button(objects.wifi_list, LV_SYMBOL_WIFI, (char *) apRecords[i].ssid);
-//       lv_obj_add_event_cb(btn, action_list_btn_wifi_network, LV_EVENT_CLICKED, NULL);
-//       uniqueRecords[uniqueCount++] = apRecords[i];
-//     }
-//   }
-//   char apStatus[20];
-//   sprintf(apStatus, "%d Wi-Fi terdeteksi", uniqueCount);
-
-//   lv_label_set_text(objects.wifi_status, apStatus);
-//   for(uint16_t i=0;i<uniqueCount;i++){
-//     Serial.print("SSID : "); Serial.println((char*)uniqueRecords[i].ssid);
-//   }
-// }
-
-// ================================================================================================================================================================
-
-
-
 bool is_ssid_unique(char unique_ssid[][33], int jumlah_unique_ssid, const char* ssid) {
   for (int i = 0; i < jumlah_unique_ssid; i++) {
     if (strcmp(unique_ssid[i], ssid) == 0) {
@@ -108,13 +10,13 @@ bool is_ssid_unique(char unique_ssid[][33], int jumlah_unique_ssid, const char* 
   return true;
 }
 
-void IRAM_ATTR WiFi_scan() {
+void WiFi_scan() {
   int16_t apNum = WiFi.scanNetworks();
   if (apNum < 0) {
     Serial.println("ERROR WIFI SCANNED!");
     return;
   }
-  Serial.println(apNum);
+  Serial.print("Jumlah WiFi SSID : ");Serial.println(apNum);
   char unique_ssid[MAX_AP_RECORDS][33];
   int jumlah_unique_ssid = 0;
   lv_obj_t* btn;
@@ -141,7 +43,7 @@ void IRAM_ATTR WiFi_scan() {
   }
 
   char nAP[25];
-  if (jumlah_unique_ssid >= 10) {
+  if (jumlah_unique_ssid >= MAX_AP_RECORDS) {
     sprintf(nAP, "%d Wi-Fi Terdeteksi (MAX)", jumlah_unique_ssid);
   } else {
     sprintf(nAP, "%d Wi-Fi Terdeteksi", jumlah_unique_ssid);
@@ -243,19 +145,3 @@ void WiFi_connect(lv_event_t* e) {
   wifi_timer = lv_timer_create(WiFi_connect_tick, 100, NULL);
   // disconnect_btn_interface_update();
 }
-
-// String get_mac()
-// {
-//   uint8_t macBase[6];
-//   esp_err_t ret = esp_wifi_get_mac(WIFI_IF_STA, macBase);
-//   if (ret == ESP_OK)
-//   {
-//     char mac[18];
-//     snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x", macBase[0], macBase[1], macBase[2], macBase[3], macBase[4], macBase[5]);
-//     return String(mac);
-//   }
-//   else
-//   {
-//     return String("Failed to get MAC Address!");
-//   }
-// }

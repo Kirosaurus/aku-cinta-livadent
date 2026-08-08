@@ -1,4 +1,6 @@
+#include "WiFiType.h"
 #include "hardware_workflow.h"
+#include "wifi_livadent.h"
 
 const double v7 = 1.8;
 const double v4 = 2.1;
@@ -73,18 +75,22 @@ void failed_handler_timeout(lv_timer_t* time) {
 }
 
 
-void process() {
-
+void process(String schedule_key, String student_key, String screening_key) {
   // Gerakin sensor ph
-  get_ph();
+  // get_ph();
   // Balikin sensor ph
 
   // Gerakin sensor viskositas
-  int adc0 = read_adc_median(0);
-  visc_sensor = ads.computeVolts(adc0);  // INI CUMA PLACEHOLDER
+  // int adc0 = read_adc_median(0);
+  // visc_sensor = ads.computeVolts(adc0);  // INI CUMA PLACEHOLDER
   // Balikin sensor viskositas
 
   // Validasi data skrining wajar atau egak
+
+  // HARDCODE NILAI SENSOR PH DAN VISKOSITAS
+  ph_sensor = PH_INPUT_DUMMY;
+  visc_sensor = VISKOSITAS_INPUT_DUMMY;
+
   if (ph_sensor <= 0 || ph_sensor > 14) {
     lv_obj_remove_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
@@ -111,12 +117,41 @@ void process() {
     File write_file = LittleFS.open(CONFIG_PATH, "w");
     serializeJsonPretty(doc, write_file);
     write_file.close();
-    return;
   }
+  if (WiFi.status() == WL_CONNECTED) {
+    JsonDocument ret_val;
+    ret_val["mode"] = "online";
+    ret_val["ph"] = ph_sensor;
+    ret_val["viscosity"] = visc_sensor;
+    ret_val["risk"] = -1;
+    ret_val["schedule_id"] = schedule_key;
+    ret_val["student_id"] = student_key;
 
-  mlp_risk_label = predict_test(ph_sensor, visc_sensor);
+    String database_up;
+    serializeJson(ret_val, database_up);
+    Serial.print("Firebase is Active? = ");
+    Serial.println(firebaseApp.ready());
+    Serial.println(database_up);
+    if (firebaseApp.ready()) {
+      Serial.println("Send pH & Viscosity Value to Database...");
+      database.set<String>(async_client, "screenings/" + screening_key + "/mode", "online");
+      database.set<float>(async_client, "screenings/" + screening_key + "/ph", ph_sensor);
+      database.set<float>(async_client, "screenings/" + screening_key + "/viscosity", visc_sensor);
+      database.set<int>(async_client, "screenings/" + screening_key + "/risk", -1);
+      database.set<String>(async_client, "screenings/" + screening_key + "/schedule_id", schedule_key);
+      database.set<String>(async_client, "screenings/" + screening_key + "/student_id", student_key);
 
+      Serial.println(screening_key);
+      do {
+        mlp_risk_label = database.get<int>(async_client, "screenings/" + screening_key + "/risk");
+        Serial.println("Waiting Web App Classification...");
+        Serial.print("MLP Classification : ");Serial.println(mlp_risk_label);
+      } while (mlp_risk_label == 255);
+    }
 
+  } else {
+    mlp_risk_label = predict_test(ph_sensor, visc_sensor);
+  }
 
   lv_scr_load_anim(objects.result, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
 }

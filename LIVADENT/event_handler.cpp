@@ -106,8 +106,11 @@ void result_loaded(lv_event_t* e) {
       lv_obj_set_style_bg_color(objects.risk_bg, lv_color_hex(0xFFD9D9), NULL);
       lv_label_set_text(objects.risk_label, "Risiko Karies Gigi Tinggi");
       lv_label_set_text(objects.risk_desc, "Waspadalah Boloooo");
-    } else {
-      lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
+    } 
+    else {
+      lv_label_set_text(objects.risk_label, "Error coy");
+      lv_label_set_text(objects.risk_desc, "dsaodhoashdho");
+      // lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
     }
   }
 }
@@ -149,7 +152,7 @@ void splash_screen_loaded(lv_event_t* e) {
     if (!ads.begin()) {
       Serial.println("ADS Gagal Inisialisasi");
       lv_label_set_text(objects.process_init, "ADS Gagal Inisialisasi! Harap mulai ulang!");
-      return;
+      // return;
     }
 
     // if (WiFi.status() == WL_CONNECTED) {
@@ -211,6 +214,7 @@ void screening_loaded(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
 
   if (code == LV_EVENT_SCREEN_LOADED) {
+    Serial.println("Screen of Screening Loaded!");
     if (WiFi.status() != WL_CONNECTED) {
       lv_obj_add_flag(objects.wifi_detail_status_screening, LV_OBJ_FLAG_HIDDEN);
       lv_obj_remove_flag(objects.offline_indicator_screening, LV_OBJ_FLAG_HIDDEN);
@@ -231,7 +235,7 @@ void screening_loaded(lv_event_t* e) {
     file.close();
 
     lv_obj_remove_flag(objects.start_stop_screening_btn, LV_OBJ_FLAG_HIDDEN);
-
+    serializeJsonPretty(doc, Serial);
     if (WiFi.status() != WL_CONNECTED && doc["on_going"] != true) {  // && Ketika Tidak lagi On progress
       lv_obj_remove_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
@@ -243,7 +247,9 @@ void screening_loaded(lv_event_t* e) {
 
       lv_label_set_text(objects.start_stop_screening_label, "Mulai Skrining");
       lv_obj_set_style_bg_color(objects.start_stop_screening_btn, lv_color_hex(0x2196f3), NULL);
+      Serial.println("Masuk 1");
     } else if (WiFi.status() == WL_CONNECTED && doc["on_going"] == true) {
+      Serial.println("Masuk 2");
       lv_obj_add_flag(objects.offline_indicator_screening, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.container_screening_btn, LV_OBJ_FLAG_HIDDEN);
@@ -285,15 +291,6 @@ void disconnect_btn_interface_update() {
     lv_obj_add_flag(objects.disconnect_wifi_btn, LV_OBJ_FLAG_CLICKABLE);
   }
 }
-
-
-// bool checkbox_auto_connect(lv_event_t * e){
-//   lv_event_code_t code = lv_event_get_code(e);
-
-//   if(code == LV_EVENT_VALUE_CHANGED){
-//     return lv_obj_has_state(objects.is_auto_connect, LV_STATE_CHECKED);
-//   }
-// }
 
 void disconnect_status_timer(lv_timer_t* timer) {
   lv_obj_add_flag(objects.panel_status_connection, LV_OBJ_FLAG_HIDDEN);
@@ -341,59 +338,18 @@ void wifi_settings_btn(lv_event_t* e) {
 }
 
 void list_btn_wifi_network(lv_event_t* e) {
-  //     String get_Selected_SSID;
-
   lv_event_code_t code = lv_event_get_code(e);
   lv_obj_t* obj = (lv_obj_t*)lv_event_get_target(e);
 
   if (code == LV_EVENT_CLICKED) {
     LV_UNUSED(obj);
-    //     //LV_LOG_USER("Clicked: %s", lv_list_get_button_text(objects.list_wifi_network_ws, obj));
-
-    //     get_Selected_SSID = "";
-    //     get_Selected_SSID = String(lv_list_get_button_text(objects.wifi_list, obj));
-
-    //     Serial.println();
-    //     Serial.print(get_Selected_SSID);
-    //     Serial.println(" is clicked/touched.");
-
-    //     if (WiFi.status() == WL_CONNECTED) {
-    //       if (get_Selected_SSID == saved_SSID) return;
-    //     }
-
-    //     // Show the "panel_connect_ws" panel.
-    //     lv_obj_remove_flag(objects.panel_connect_ws, LV_OBJ_FLAG_HIDDEN);
-
-    //     // Hide the "panel_main_ws" panel.
-    //     lv_obj_add_flag(objects.panel_main_ws, LV_OBJ_FLAG_HIDDEN);
-
-    //     if (get_Selected_SSID == saved_SSID) {
-    //       get_Selected_SSID = saved_SSID;
-    //       get_Entered_SSID_Password = saved_Password;
-
-    //       lv_textarea_set_text(objects.textarea_password_ws, get_Entered_SSID_Password.c_str());
-    //     } else {
-    //       lv_textarea_set_text(objects.textarea_password_ws, "");
-    //     }
     const char* ssid = lv_list_get_button_text(objects.wifi_list, obj);
     lv_label_set_text(objects.name_ssid, ssid);
 
     lv_obj_remove_flag(objects.keyboard_password, LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(objects.panel_input_wifi_password, LV_OBJ_FLAG_HIDDEN);
-    //     lv_obj_set_style_text_color(objects.label_connecting_process_info_ws, lv_color_hex(0xff2a2c3b), LV_PART_MAIN | LV_STATE_DEFAULT);
-    //     lv_label_set_text(objects.label_connecting_process_info_ws, "");
-
-    //     update_UI();
   }
 }
-
-// void back_wifi_btn(lv_event_t* e) {
-//   lv_event_code_t code = lv_event_get_code(e);
-
-//   if (code == LV_EVENT_CLICKED) {
-//     lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
-//   }
-// }
 
 void wifi_cancel_btn(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
@@ -469,7 +425,7 @@ void cancel_offline_screening(lv_event_t* e) {
 }
 
 void process_timer(lv_timer_t* timer) {
-  process();
+  process("", "", "");
   lv_timer_del(timer);
 }
 
@@ -530,7 +486,6 @@ void wifi_scan_timer(lv_timer_t* timer) {
   WiFi_scan();
   lv_obj_add_flag(objects.panel_status_connection, LV_OBJ_FLAG_HIDDEN);
   lv_obj_remove_flag(objects.wifi_ssid_status_connection, LV_OBJ_FLAG_HIDDEN);
-  // lv_label_set_text(objects.detail_status_wifi_connection, "Memindai Wi-Fi...");
 
   lv_timer_del(timer);
 }
