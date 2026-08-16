@@ -13,7 +13,7 @@
 #define DRIVER_ADDRESS 0b00 // Alamat default TMC2209
 
 #define R_SENSE       0.11f // Nilai resistor sense standar TMC2209
-#define RMS_CURRENT    500  // Arus dinaikkan ke 800 mA agar kuat di RPM tinggi!
+#define RMS_CURRENT    367 // Arus dinaikkan ke 800 mA agar kuat di RPM tinggi!
 
 // --- Inisialisasi Objek ---
 Adafruit_ADS1115 ads; 
@@ -36,12 +36,12 @@ void codeTaskMotor(void * pvParameters) {
 }
 
 // --- FUNGSI MEAN / MOVING AVERAGE UNTUK LOAD ---
-#define SAMPLE_SIZE 15  // Ambil rata-rata dari 15 sampel pembacaan
+#define SAMPLE_SIZE 80  // Ambil rata-rata dari 15 sampel pembacaan
 uint16_t getFilteredLoad() {
   long total = 0;
   for (int i = 0; i < SAMPLE_SIZE; i++) {
     total += driver.SG_RESULT();
-    delayMicroseconds(50); // Jeda singkat antar pembacaan
+    delayMicroseconds(10); // Jeda singkat antar pembacaan
   }
   return total / SAMPLE_SIZE;
 }
@@ -73,7 +73,7 @@ void setup() {
   if (!ads.begin()) {
     Serial.println("Gagal mendeteksi ADS1115!");
   } else {
-    ads.setGain(GAIN_ONE);
+    ads.setGain(GAIN_SIXTEEN);
   }
 
   // --- Inisialisasi Pin Stepper ---
@@ -89,15 +89,15 @@ void setup() {
   driver.rms_current(RMS_CURRENT);  // 800 mA agar bertenaga
   
   // SPREADCYCLE AKTIF: Mencegah stall di RPM tinggi
-  driver.en_spreadCycle(false);      
-  driver.pwm_autoscale(true);
-  
-  driver.microsteps(64);            
+  driver.en_spreadCycle(true);      
+  driver.pwm_autoscale(false);
+    
+  driver.microsteps(8);            
   driver.intpol(true);              
 
   // --- SETTING KECEPATAN TINGGI ---
-  stepper.setMaxSpeed(130000);        // Kecepatan tinggi (Silakan sesuaikan 3000 - 6000)
-  stepper.setAcceleration(5000);    // Ramp-up bertahap agar tidak kaget/stall saat awal start
+  stepper.setMaxSpeed(4867);        // Kecepatan tinggi (Silakan sesuaikan 3000 - 6000)
+  stepper.setAcceleration(200);    // Ramp-up bertahap agar tidak kaget/stall saat awal start
   stepper.setEnablePin(EN_PIN);
   stepper.setPinsInverted(false, false, true); 
   stepper.enableOutputs();
