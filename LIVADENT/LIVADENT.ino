@@ -5,6 +5,7 @@
 #include "global.h"
 #include "hardware_workflow.h"
 #include "esp_heap_caps.h"
+#include "websockets.h"
 
 // #include <ESP.h>
 
@@ -41,15 +42,24 @@ void setup() {
   // Serial.println(ESP.getPsramSize());
   // Serial.print("Free PSRAM: ");
   // Serial.println(ESP.getFreePsram());
+  // Serial.println("BEFORE websocket.begin()");
+  // webSocket.begin();
+  // Serial.println("AFTER websocket.begin()");
+  // Serial.println("BEFORE websocket.onEvent()");
+  // webSocket.onEvent(webSocketEvent);
+  // Serial.println("AFTER websocket.onEvent()");
 }
 
 bool anu = 0;
 void loop() {
-  firebaseApp.loop();
-  server.handleClient();
+
   // Serial.println("Still Online");
 
   if (WiFi.status() == WL_CONNECTED) {
+    firebaseApp.loop();
+    server.handleClient();
+    updateSessionKey();
+    webSocket.loop();
     update_json();
   }
 
@@ -60,7 +70,6 @@ void loop() {
   }
 
   update_UI();
-
 
   // if (firebaseApp.ready() && !anu)
   // {

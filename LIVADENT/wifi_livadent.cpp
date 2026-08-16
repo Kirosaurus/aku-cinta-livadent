@@ -16,7 +16,8 @@ void WiFi_scan() {
     Serial.println("ERROR WIFI SCANNED!");
     return;
   }
-  Serial.print("Jumlah WiFi SSID : ");Serial.println(apNum);
+  Serial.print("Jumlah WiFi SSID : ");
+  Serial.println(apNum);
   char unique_ssid[MAX_AP_RECORDS][33];
   int jumlah_unique_ssid = 0;
   lv_obj_t* btn;
@@ -100,6 +101,8 @@ void WiFi_connect_tick(lv_timer_t* timer) {
       Serial.println("Database Init...");
       database_init();
       local_server_init();
+      webSocket.begin();
+      webSocket.onEvent(webSocketEvent);
       disconnect_btn_interface_update();
       wifi_settings_heading_interface_update();
     } else if (elapsed >= WIFI_CONNECT_TIMEOUT) {

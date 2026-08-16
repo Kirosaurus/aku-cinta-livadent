@@ -16,8 +16,8 @@
 #define SCAN_TIMEOUT 30000
 #define PIN_SENSOR_PH 34
 #define FAILED_TIMEOUT 10000
-#define PH_INPUT_DUMMY 6.2
-#define VISKOSITAS_INPUT_DUMMY 2.32
+#define PH_INPUT_DUMMY 6.49
+#define VISKOSITAS_INPUT_DUMMY 1.43
 
 using namespace std;
 

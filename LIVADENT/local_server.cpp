@@ -169,8 +169,15 @@ void web_app_start() {
   String key = web_app_data["key"];
   Serial.print("Ini key screening : "); Serial.println(key);
 
+  // lv_timer_create(screening_timer, 500, NULL);
   lv_scr_load_anim(objects.screening, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
   process(schedule_key, student_key, key);
+}
+
+void screening_timer(lv_timer_t * timer){
+  lv_scr_load_anim(objects.screening, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
+
+  lv_timer_del(timer);
 }
 
 void local_server_init() {

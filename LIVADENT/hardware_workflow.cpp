@@ -85,12 +85,13 @@ void process(String schedule_key, String student_key, String screening_key) {
   // visc_sensor = ads.computeVolts(adc0);  // INI CUMA PLACEHOLDER
   // Balikin sensor viskositas
 
-  // Validasi data skrining wajar atau egak
 
-  // HARDCODE NILAI SENSOR PH DAN VISKOSITAS
+  /////////////////////////////////////////////// HARDCODE NILAI SENSOR PH DAN VISKOSITAS
   ph_sensor = PH_INPUT_DUMMY;
   visc_sensor = VISKOSITAS_INPUT_DUMMY;
+  ///////////////////////////////////////////////
 
+  // Validasi data skrining wajar atau egak
   if (ph_sensor <= 0 || ph_sensor > 14) {
     lv_obj_remove_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
@@ -118,6 +119,7 @@ void process(String schedule_key, String student_key, String screening_key) {
     serializeJsonPretty(doc, write_file);
     write_file.close();
   }
+
   if (WiFi.status() == WL_CONNECTED) {
     JsonDocument ret_val;
     ret_val["mode"] = "online";
@@ -142,10 +144,21 @@ void process(String schedule_key, String student_key, String screening_key) {
       database.set<String>(async_client, "screenings/" + screening_key + "/student_id", student_key);
 
       Serial.println(screening_key);
+
+      uint32_t poll_start = millis();
+      const uint32_t POLL_TIMEOUT_MS = 30000;  
+
       do {
         mlp_risk_label = database.get<int>(async_client, "screenings/" + screening_key + "/risk");
-        Serial.println("Waiting Web App Classification...");
-        Serial.print("MLP Classification : ");Serial.println(mlp_risk_label);
+        Serial.print("Waiting Web App Classification... ");
+        Serial.println(mlp_risk_label);
+
+        if (millis() - poll_start > POLL_TIMEOUT_MS) {
+          Serial.println("Timeout menunggu klasifikasi dari web app!");
+          mlp_risk_label = 3;  // fallback state kalau timeout
+          break;
+        }
+        delay(500); 
       } while (mlp_risk_label == 255);
     }
 

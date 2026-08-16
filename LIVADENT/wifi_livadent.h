@@ -10,6 +10,7 @@
 #include "event_handler.h"
 #include "firebase_livadent.h"
 #include "lcd.h"
+#include "websockets.h"
 // #include "esp_event.h"
 // #include "esp_netif.h"
 // #include "nvs_flash.h"
