@@ -2,7 +2,7 @@
 
 WebSocketsServer webSocket(81);
 
-char session_key[41];
+char session_key[41] = "";
 uint32_t last_millis = millis();
 bool session_timeout = false;
 uint8_t activeClient = 255;
@@ -83,8 +83,11 @@ void webSocketEvent(
         if (error) {
           Serial.println("web_app_request deserialization error!");
         }
+
         Serial.print("INFO : ");
         Serial.println((const char*)web_app_request["info"]);
+
+        // BUAT RESPOND PING DARI WEB APP
         if (strcmp(web_app_request["info"], "PING") == 0) {
           Serial.println("PINGING");
           last_millis = millis();
@@ -94,13 +97,17 @@ void webSocketEvent(
           String ret_val;
 
           serializeJson(doc, ret_val);
-          Serial.print("PINGING DATA : "); serializeJson(doc, Serial);
+          Serial.print("PINGING DATA : ");
+          serializeJson(doc, Serial);
           webSocket.sendTXT(
             clientNum,
             ret_val);
           break;
-        } else if (strcmp(web_app_request["info"], "session_key") == 0) {
+        }
+        // BUAT CEK SESSION KEY
+        else if (strcmp(web_app_request["info"], "session_key") == 0) {
           Serial.println("Session Key Given!");
+          // Kalo misal session key egak ada, langsung ganti yang baru, kalo ada dicek dulu apakah sama atau egak. Kalo beda reject
           if (strcmp(session_key, "") == 0) {
             strcpy(session_key, web_app_request["session_key"]);
           } else if (strcmp(session_key, web_app_request["session_key"]) != 0) {
@@ -113,7 +120,9 @@ void webSocketEvent(
             // webSocket.close();
             break;
           }
-        } else if (strcmp(web_app_request["info"], "connect_init") == 0) {
+        }
+        // NGASIH KONDISI SENSOR WAKTU INISIALISASI
+        else if (strcmp(web_app_request["info"], "connect_init") == 0) {
           Serial.println(session_key);
           JsonDocument doc;
           doc["info"] = "Sensor Initialization";
@@ -124,8 +133,12 @@ void webSocketEvent(
           serializeJson(doc, Serial);
           webSocket.sendTXT(clientNum, ret_val);
           Serial.println("Send Init");
+          break;
         }
-        break;
+        // RESPOND START DARI WEB APP
+        else if(strcmp(web_app_request["info"], "start_screening") == 0){
+          
+        }
       }
     default:
       break;
@@ -133,7 +146,7 @@ void webSocketEvent(
 }
 
 void updateSessionKey() {
-  if (millis() - last_millis > 20000 && !session_timeout) {
+  if (millis() - last_millis > TIMEOUT_WEB_APP_CONNECTION && !session_timeout) {
     Serial.println("No Respond from Web App! (Session Deleted)");
     session_timeout = true;
     strcpy(session_key, "");
