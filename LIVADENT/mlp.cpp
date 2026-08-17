@@ -12,6 +12,16 @@ constexpr int kTensorArenaSize = 8 * 1024;
 uint8_t* tensor_arena = nullptr;
 }
 
+void input_scaler(float ph, float visc, float output[2]){
+  const float ph_mid = 6.67;
+  const float ph_scale = 0.3799999999999999;
+  const float visc_mid = 1.183088939;
+  const float visc_scale = 0.4181607460000001;
+
+  output[0] = (ph - ph_mid) / ph_scale;
+  output[1] = (visc - visc_mid) / visc_scale;
+}
+
 void mlp_init() {
   tflite::InitializeTarget();
 
@@ -38,8 +48,13 @@ void mlp_init() {
     return;
   }
 
-  if (resolver.AddRelu() != kTfLiteOk) {
-    MicroPrintf("AddRelu failed");
+  // if (resolver.AddRelu() != kTfLiteOk) {
+  //   MicroPrintf("AddRelu failed");
+  //   return;
+  // }
+
+  if (resolver.AddElu() != kTfLiteOk) {
+    MicroPrintf("AddElu failed");
     return;
   }
 
@@ -75,19 +90,24 @@ uint8_t predict_test(float ph, float viskositas) {
 
   //   double ph = random_number;
   //   float viskositas = random_number_visc;
+  float input_params[2]; 
+  input_scaler(ph, viskositas, input_params); 
 
   if (input->type == kTfLiteInt8) {
     input->data.int8[0] = static_cast<int8_t>(
-      ph / input->params.scale + input->params.zero_point);
+      input_params[0] / input->params.scale + input->params.zero_point);
 
     input->data.int8[1] = static_cast<int8_t>(
-      viskositas / input->params.scale + input->params.zero_point);
+      input_params[1] / input->params.scale + input->params.zero_point);
   }
 
   else if (input->type == kTfLiteFloat32) {
     MicroPrintf("Float32");
-    input->data.f[0] = ph;
-    input->data.f[1] = viskositas;
+    Serial.println(input_params[0]);
+    Serial.println(input_params[1]);
+    MicroPrintf("Float32");
+    input->data.f[0] = input_params[0];
+    input->data.f[1] = input_params[1];
   }
 
   else {

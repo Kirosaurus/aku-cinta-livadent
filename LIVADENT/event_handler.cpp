@@ -217,7 +217,10 @@ void screening_loaded(lv_event_t* e) {
 
     lv_obj_remove_flag(objects.start_stop_screening_btn, LV_OBJ_FLAG_HIDDEN);
     if (WiFi.status() != WL_CONNECTED && global_variable["on_going"] != true) {  // && Ketika Tidak lagi On progress
+      Serial.println("ANJAYYY");
       lv_obj_remove_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(objects.start_stop_screening_btn, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_remove_flag(objects.back_btn_screening, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.back_in_second, LV_OBJ_FLAG_HIDDEN);
@@ -228,6 +231,7 @@ void screening_loaded(lv_event_t* e) {
       lv_label_set_text(objects.start_stop_screening_label, "Mulai Skrining");
       lv_obj_set_style_bg_color(objects.start_stop_screening_btn, lv_color_hex(0x2196f3), NULL);
     } else if (WiFi.status() == WL_CONNECTED && global_variable["on_going"] == true) {
+      Serial.println("GOKILL");
       lv_obj_add_flag(objects.offline_indicator_screening, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.container_peringatan_penggunaan, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(objects.container_screening_btn, LV_OBJ_FLAG_HIDDEN);
