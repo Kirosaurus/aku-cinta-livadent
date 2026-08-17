@@ -1,5 +1,9 @@
 #include "wifi_livadent.h"
 
+char wifi_ssid_list[MAX_WIFI_RESULTS][33];
+int wifi_ssid_count = 0;
+int wifi_current_page = 0;
+
 bool is_ssid_unique(char unique_ssid[][33], int jumlah_unique_ssid, const char* ssid) {
   for (int i = 0; i < jumlah_unique_ssid; i++) {
     if (strcmp(unique_ssid[i], ssid) == 0) {
@@ -16,52 +20,58 @@ void WiFi_scan() {
     Serial.println("ERROR WIFI SCANNED!");
     return;
   }
-  Serial.print("Jumlah WiFi SSID : ");
-  Serial.println(apNum);
-  char unique_ssid[MAX_AP_RECORDS][33];
-  int jumlah_unique_ssid = 0;
-  lv_obj_t* btn;
 
-  lv_obj_clean(objects.wifi_list);
+  wifi_ssid_count = 0;
 
-  for (int16_t i = 0; i < apNum; i++) {
+  for (int16_t i = 0; i < apNum && wifi_ssid_count < MAX_WIFI_RESULTS; i++) {
     String wifi_ssid = WiFi.SSID(i);
-
     const char* ssid = wifi_ssid.c_str();
 
-    if (is_ssid_unique(unique_ssid, jumlah_unique_ssid, ssid)) {
-      strncpy(unique_ssid[jumlah_unique_ssid], ssid, 32);
-      btn = lv_list_add_button(objects.wifi_list, LV_SYMBOL_WIFI, ssid);
-      unique_ssid[jumlah_unique_ssid][32] = '\0';
-
-      lv_obj_add_event_cb(btn, list_btn_wifi_network, LV_EVENT_CLICKED, NULL);
-
-      jumlah_unique_ssid++;
-      if (jumlah_unique_ssid >= MAX_AP_RECORDS) {
-        break;
-      }
+    if (is_ssid_unique(wifi_ssid_list, wifi_ssid_count, ssid)) {
+      strncpy(wifi_ssid_list[wifi_ssid_count], ssid, 32);
+      wifi_ssid_list[wifi_ssid_count][32] = '\0';
+      wifi_ssid_count++;
     }
   }
 
+  wifi_current_page = 0;
+  render_wifi_page();
+
   char nAP[25];
-  if (jumlah_unique_ssid >= MAX_AP_RECORDS) {
-    sprintf(nAP, "%d Wi-Fi Terdeteksi (MAX)", jumlah_unique_ssid);
-  } else {
-    sprintf(nAP, "%d Wi-Fi Terdeteksi", jumlah_unique_ssid);
-  }
+  sprintf(nAP, "%d Wi-Fi Terdeteksi", wifi_ssid_count);
   lv_label_set_text(objects.wifi_status, nAP);
 
-  // Serial.print("Total Heap: ");
-  // Serial.println(ESP.getHeapSize());
-  // Serial.print("Free Heap: ");
-  // Serial.println(ESP.getFreeHeap());
   Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
   WiFi.scanDelete();
-  // Serial.print("Total Heap: ");
-  // Serial.println(ESP.getHeapSize());
-  // Serial.print("Free Heap: ");
-  // Serial.println(ESP.getFreeHeap());
   Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+}
+
+void render_wifi_page() {
+  lv_obj_clean(objects.wifi_list);
+
+  int start = wifi_current_page * WIFI_ITEMS_PER_PAGE;
+  int end = start + WIFI_ITEMS_PER_PAGE;
+  if (end > wifi_ssid_count) end = wifi_ssid_count;
+
+  for (int i = start; i < end; i++) {
+    lv_obj_t* btn = lv_list_add_button(objects.wifi_list, LV_SYMBOL_WIFI, wifi_ssid_list[i]);
+    lv_obj_add_event_cb(btn, list_btn_wifi_network, LV_EVENT_CLICKED, NULL);
+  }
+
+  int total_pages = (wifi_ssid_count + WIFI_ITEMS_PER_PAGE - 1) / WIFI_ITEMS_PER_PAGE;
+  if (total_pages == 0) total_pages = 1;
+
+  if (wifi_current_page <= 0) {
+    lv_obj_add_state(objects.wifi_page_prev_btn, LV_STATE_DISABLED);
+  } else {
+    lv_obj_clear_state(objects.wifi_page_prev_btn, LV_STATE_DISABLED);
+  }
+
+  if (wifi_current_page >= total_pages - 1) {
+    lv_obj_add_state(objects.wifi_page_next_btn, LV_STATE_DISABLED);
+  } else {
+    lv_obj_clear_state(objects.wifi_page_next_btn, LV_STATE_DISABLED);
+  }
 }
 
 void wifi_status_conn_timer(lv_timer_t* timer) {
@@ -100,7 +110,6 @@ void WiFi_connect_tick(lv_timer_t* timer) {
 
       Serial.println("Database Init...");
       database_init();
-      local_server_init();
       webSocket.begin();
       webSocket.onEvent(webSocketEvent);
       disconnect_btn_interface_update();

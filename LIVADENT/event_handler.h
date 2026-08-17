@@ -29,5 +29,8 @@ extern void yes_screening_btn(lv_event_t* e);
 extern void back_btn(lv_event_t* e);
 extern void back_btn_failed(lv_event_t* e);
 extern void cancel_offline_screening(lv_event_t* e);
+
+extern void wifi_page_prev_btn(lv_event_t* e);
+extern void wifi_page_next_btn(lv_event_t* e);
 // extern void back_wifi_btn(lv_event_t * e);
 // extern void back_btn_screening(lv_event_t * e);

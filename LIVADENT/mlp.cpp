@@ -9,12 +9,19 @@ TfLiteTensor* output = nullptr;
 
 constexpr int kTensorArenaSize = 8 * 1024;
 // const int kTensorArenaSize = 8 * 1024;
-alignas(16) uint8_t tensor_arena[kTensorArenaSize];
+uint8_t* tensor_arena = nullptr;
 }
 
 void mlp_init() {
   tflite::InitializeTarget();
 
+  tensor_arena = (uint8_t*)heap_caps_aligned_alloc(
+    16, kTensorArenaSize, MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL);
+
+  if (tensor_arena == nullptr) {
+    MicroPrintf("Gagal alokasi tensor arena!");
+    return;
+  }
   model = tflite::GetModel(exported_model_tflite);
 
   if (model->version() != TFLITE_SCHEMA_VERSION) {
@@ -54,7 +61,7 @@ void mlp_init() {
 
   input = interpreter->input(0);
   output = interpreter->output(0);
-  
+
   MicroPrintf("Model siap dijalankan");
   MicroPrintf("Input type: %d", input->type);
   MicroPrintf("Output type: %d", output->type);
@@ -69,24 +76,24 @@ uint8_t predict_test(float ph, float viskositas) {
   //   double ph = random_number;
   //   float viskositas = random_number_visc;
 
-    if (input->type == kTfLiteInt8) {
-      input->data.int8[0] = static_cast<int8_t>(
-          ph / input->params.scale + input->params.zero_point);
+  if (input->type == kTfLiteInt8) {
+    input->data.int8[0] = static_cast<int8_t>(
+      ph / input->params.scale + input->params.zero_point);
 
-      input->data.int8[1] = static_cast<int8_t>(
-          viskositas / input->params.scale + input->params.zero_point);
-    }
+    input->data.int8[1] = static_cast<int8_t>(
+      viskositas / input->params.scale + input->params.zero_point);
+  }
 
-    else if (input->type == kTfLiteFloat32) {
-      MicroPrintf("Float32");
-      input->data.f[0] = ph;
-      input->data.f[1] = viskositas;
-    }
+  else if (input->type == kTfLiteFloat32) {
+    MicroPrintf("Float32");
+    input->data.f[0] = ph;
+    input->data.f[1] = viskositas;
+  }
 
-    else {
-      MicroPrintf("Tipe input belum didukung");
-      return 3;
-    }
+  else {
+    MicroPrintf("Tipe input belum didukung");
+    return 3;
+  }
 
   TfLiteStatus invoke_status = interpreter->Invoke();
 
@@ -97,23 +104,23 @@ uint8_t predict_test(float ph, float viskositas) {
 
   float skor[3];
 
-    if (output->type == kTfLiteInt8) {
-      for (int i = 0; i < 3; i++) {
-        int8_t nilai_quantized = output->data.int8[i];
-        skor[i] = (nilai_quantized - output->params.zero_point) * output->params.scale;
-      }
+  if (output->type == kTfLiteInt8) {
+    for (int i = 0; i < 3; i++) {
+      int8_t nilai_quantized = output->data.int8[i];
+      skor[i] = (nilai_quantized - output->params.zero_point) * output->params.scale;
     }
+  }
 
-    else if (output->type == kTfLiteFloat32) {
-      for (int i = 0; i < 3; i++) {
-        skor[i] = output->data.f[i];
-      }
+  else if (output->type == kTfLiteFloat32) {
+    for (int i = 0; i < 3; i++) {
+      skor[i] = output->data.f[i];
     }
+  }
 
-    else {
-      MicroPrintf("Tipe output belum didukung");
-      return 3;
-    }
+  else {
+    MicroPrintf("Tipe output belum didukung");
+    return 3;
+  }
 
   int prediksi = 0;
   float skor_tertinggi = skor[0];

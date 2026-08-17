@@ -19,8 +19,13 @@
 #define PH_INPUT_DUMMY 6.49
 #define VISKOSITAS_INPUT_DUMMY 1.43
 
+#define DUMMY_TIMEOUT_SCAN 10000 // INI CUMA DUMMY LEBIH CEPET DARI PADA YANG SEHARUSNYA
+
 using namespace std;
 
 extern Adafruit_ADS1115 ads;
 
-extern void process(String schedule_key, String student_key, String screening_key);
+// extern void process(String schedule_key, String student_key, String screening_key);
+extern void screening_process_tick(lv_timer_t* timer);
+extern void start_screening_process(String schedule_key, String student_key, String screening_key);
+extern void stop_screening_process();

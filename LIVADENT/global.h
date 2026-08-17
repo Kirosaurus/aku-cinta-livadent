@@ -1,6 +1,7 @@
 #pragma once
 #include <Preferences.h>
 #include <lvgl.h>
+#include <ArduinoJson.h>
 
 extern Preferences preferences;
 
@@ -16,6 +17,21 @@ typedef enum {
   WIFI_STATE_FAILED
 } wifi_conn_state_t;
 
+typedef enum {
+  SCREENING_IDLE,
+  SCREENING_SENSOR_READ,
+  SCREENING_SEND_TO_FIREBASE,
+  SCREENING_WAIT_CLASSIFICATION,
+  SCREENING_DONE
+} screening_state_t;
+
+extern screening_state_t screening_state;
+extern lv_timer_t* screening_timer;
+extern uint32_t screening_poll_start_ms;
+extern String screening_schedule_key;
+extern String screening_student_key;
+extern String screening_key_active;
+
 extern wifi_conn_state_t wifi_state;
 extern uint32_t wifi_connect_start_ms;
 extern lv_timer_t* wifi_timer;
@@ -25,3 +41,8 @@ extern const char* CONFIG_PATH;
 extern float ph_sensor;
 extern float visc_sensor;
 extern uint8_t mlp_risk_label;
+
+extern JsonDocument global_variable;
+
+// MACRO CONFIGURATION
+#define DEBUG

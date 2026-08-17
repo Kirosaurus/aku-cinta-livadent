@@ -17,3 +17,12 @@ const char* CONFIG_PATH = "/web_app_config.json";
 float ph_sensor = -1;
 float visc_sensor = -1;
 uint8_t mlp_risk_label = 3;
+
+JsonDocument global_variable;
+
+screening_state_t screening_state = SCREENING_IDLE;
+lv_timer_t* screening_timer = NULL;
+uint32_t screening_poll_start_ms = 0;
+String screening_schedule_key = "";
+String screening_student_key = "";
+String screening_key_active = "";

@@ -13,7 +13,6 @@
 #include <UI_LCD.h>
 
 lv_color_t *draw_buf = nullptr;
-// uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 
 TFT_eSPI tft = TFT_eSPI();
 uint16_t calData[5] = { 410, 3430, 323, 3386, 7 };
@@ -96,6 +95,10 @@ void lcd_setup() {
   lv_obj_add_event_cb(objects.back_offline_screening, cancel_offline_screening, LV_EVENT_CLICKED, NULL);
 
   lv_obj_add_event_cb(objects.failed_back_to_main_menu_btn, back_btn_failed, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.wifi_page_prev_btn, wifi_page_prev_btn, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.wifi_page_next_btn, wifi_page_next_btn, LV_EVENT_CLICKED, NULL);
 }
 
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
