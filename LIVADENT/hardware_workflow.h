@@ -10,7 +10,7 @@
 #include <ArduinoJson.h>
 
 #include "mlp.h"
-// #include "esp_random.h"
+#include "esp_random.h"
 #include "global.h"
 
 #define SCAN_TIMEOUT 30000
@@ -21,9 +21,19 @@
 
 #define DUMMY_TIMEOUT_SCAN 10000 // INI CUMA DUMMY LEBIH CEPET DARI PADA YANG SEHARUSNYA
 
+#define DIR_PIN_X 13
+#define STEP_PIN_X 14
+#define EN_PIN_X 17
+#define STEP_PIN_Y 32
+#define DIR_PIN_Y 33
+
 using namespace std;
 
 extern Adafruit_ADS1115 ads;
+extern QueueHandle_t xQueue;
+extern TaskHandle_t TaskMotor;
+extern void motor_task(void* pv);
+extern void create_queue_motor(AccelStepper* motor_identifier, long distance, screening_state_t next_state);
 
 // extern void process(String schedule_key, String student_key, String screening_key);
 extern void screening_process_tick(lv_timer_t* timer);

@@ -11,10 +11,15 @@
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial) {
-  }
+  while (!Serial)
 
+    // HARDWARE
+    pinMode(EN_PIN_X, OUTPUT);
   pinMode(PIN_SENSOR_PH, INPUT);
+  //
+
+  xQueue = xQueueCreate(4, sizeof(motor));
+  xTaskCreatePinnedToCore(motor_task, "MotorTask", 4096, NULL, 1, &TaskMotor, 0);
 
   if (!LittleFS.begin(true)) {
     Serial.println("LittleFS gagal dimount");
@@ -40,17 +45,17 @@ void setup() {
 
 bool anu = 0;
 void loop() {
-// #ifdef DEBUG
-//   Serial.print("Total Heap: ");
-//   Serial.println(ESP.getHeapSize());
-//   Serial.print("Free Heap: ");
-//   Serial.println(ESP.getFreeHeap());
-//   Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
-// #endif
+  webSocket.loop();
+  // #ifdef DEBUG
+  //   Serial.print("Total Heap: ");
+  //   Serial.println(ESP.getHeapSize());
+  //   Serial.print("Free Heap: ");
+  //   Serial.println(ESP.getFreeHeap());
+  //   Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+  // #endif
   if (WiFi.status() == WL_CONNECTED) {
     firebaseApp.loop();
     updateSessionKey();
-    webSocket.loop();
   }
 
   if (firebaseApp.ready() && !anu) {
@@ -61,5 +66,6 @@ void loop() {
 
   update_UI();
 
+  webSocket.loop();
   delay(5);
 }

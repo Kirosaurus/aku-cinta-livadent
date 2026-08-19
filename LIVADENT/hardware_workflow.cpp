@@ -2,6 +2,9 @@
 #include "hardware_workflow.h"
 #include "wifi_livadent.h"
 
+float ph_dummy[4] = { 6.12, 7.21, 6.73, 6.48 };
+float visc_dummy[4] = { 0.97, 1.38, 1.74, 2.38 };
+
 const double v7 = 1.8;
 const double v4 = 2.1;
 const double p7 = 6.86;
@@ -14,6 +17,44 @@ const float slope = (p7 - p4) / (v7 - v4);
 const float offset = p4 - (slope * v4);
 
 Adafruit_ADS1115 ads;
+
+TaskHandle_t TaskMotor;
+QueueHandle_t xQueue;
+
+bool queued = false;
+AccelStepper stepperX(AccelStepper::DRIVER, STEP_PIN_X, DIR_PIN_X);
+AccelStepper stepperY(AccelStepper::DRIVER, STEP_PIN_Y, DIR_PIN_Y);
+
+// STEPPER MOTOR CONFIGURATION
+const float MOTOR_SPEED = 5000.0;
+
+float DISTANCE_TO_GO = -20000;
+
+void motor_task(void* pv) {
+  motor motor_cmd;
+  while (true) {
+    if (xQueueReceive(xQueue, &motor_cmd, portMAX_DELAY) == pdTRUE) {
+      motor_cmd.motor->setMaxSpeed(MOTOR_SPEED);
+      motor_cmd.motor->move(motor_cmd.distance);
+      motor_cmd.motor->setSpeed(motor_cmd.distance > 0 ? MOTOR_SPEED : -MOTOR_SPEED);
+      while (motor_cmd.motor->distanceToGo() != 0) {
+        motor_cmd.motor->runSpeed();
+        taskYIELD();
+      }
+      screening_state = motor_cmd.next_state;
+      queued = false;
+    }
+  }
+}
+
+void create_queue_motor(AccelStepper* motor_identifier, long distance, screening_state_t next_state) {
+  motor motor_cmd = { motor_identifier, distance, next_state };
+  queued = true;
+  xQueueSend(xQueue, &motor_cmd, 0);
+}
+
+bool is_X_init = false;
+bool is_Y_init = false;
 
 int read_adc_median(int channel) {
   int adc[samples];
@@ -73,100 +114,91 @@ void failed_handler_timeout(lv_timer_t* time) {
   lv_timer_del(time);
 }
 
+bool motor_X_task_running = false;
+bool motor_Y_task_running = false;
+bool motor_X_task_finishing = false;
 
-// void process(String schedule_key, String student_key, String screening_key) {
-//   // Gerakin sensor ph
-//   // get_ph();
-//   // Balikin sensor ph
+// SCREENING_SENSOR_MOVE_X_PH
+// void mv_motor_x_ph(void* pvParameters) {
+//   while (true) {
+//     if (!is_X_init) {
+//       stepperX.setMaxSpeed(MOTOR_SPEED);
+//       DISTANCE_TO_GO = -1 * DISTANCE_TO_GO;
+//       stepperX.move(DISTANCE_TO_GO);
 
-//   // Gerakin sensor viskositas
-//   // int adc0 = read_adc_median(0);
-//   // visc_sensor = ads.computeVolts(adc0);  // INI CUMA PLACEHOLDER
-//   // Balikin sensor viskositas
-
-
-//   /////////////////////////////////////////////// HARDCODE NILAI SENSOR PH DAN VISKOSITAS
-//   ph_sensor = PH_INPUT_DUMMY;
-//   visc_sensor = VISKOSITAS_INPUT_DUMMY;
-//   ///////////////////////////////////////////////
-
-//   // Validasi data skrining wajar atau egak
-//   if (ph_sensor <= 0 || ph_sensor > 14) {
-//     lv_obj_remove_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
-//     lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
-//     lv_obj_add_flag(objects.start_stop_screening_btn, LV_OBJ_FLAG_HIDDEN);
-//     lv_obj_remove_flag(objects.back_in_second, LV_OBJ_FLAG_HIDDEN);
-
-//     // uint16_t failed_timeout = millis();
-//     // char time_second[6];
-
-//     // while(millis() - failed_timeout <= FAILED_TIMEOUT){
-//     //   snprintf(time_second, sizeof(time_second), "%d", millis() - failed_timeout);
-//     //   lv_label_set_text(objects.failed_timeout_second, time_second);
-//     //   lv_timer_handler();
-//     //   delay(1);
-//     // }
-
-//     // lv_timer_create(failed_handler_timeout, FAILED_TIMEOUT, NULL);
-//     global_variable["ready"] = true;
-//     global_variable["on_going"] = false;
-//   }
-
-//   if (WiFi.status() == WL_CONNECTED) {
-//     JsonDocument ret_val;
-//     ret_val["mode"] = "online";
-//     ret_val["ph"] = ph_sensor;
-//     ret_val["viscosity"] = visc_sensor;
-//     ret_val["risk"] = -1;
-//     ret_val["schedule_id"] = schedule_key;
-//     ret_val["student_id"] = student_key;
-
-//     String database_up;
-//     serializeJson(ret_val, database_up);
-// #ifdef DEBUG
-//     Serial.print("Firebase is Active? = ");
-//     Serial.println(firebaseApp.ready());
-//     Serial.println(database_up);
-// #endif
-//     if (firebaseApp.ready()) {
-// #ifdef DEBUG
-//       Serial.println("Send pH & Viscosity Value to Database...");
-// #endif
-//       database.set<String>(async_client, "screenings/" + screening_key + "/mode", "online");
-//       database.set<float>(async_client, "screenings/" + screening_key + "/ph", ph_sensor);
-//       database.set<float>(async_client, "screenings/" + screening_key + "/viscosity", visc_sensor);
-//       database.set<int>(async_client, "screenings/" + screening_key + "/risk", -1);
-//       database.set<String>(async_client, "screenings/" + screening_key + "/schedule_id", schedule_key);
-//       database.set<String>(async_client, "screenings/" + screening_key + "/student_id", student_key);
-
-// #ifdef DEBUG
-//       Serial.println(screening_key);
-// #endif
-
-//       uint32_t poll_start = millis();
-//       const uint32_t POLL_TIMEOUT_MS = 30000;
-
-//       do {
-//         mlp_risk_label = database.get<int>(async_client, "screenings/" + screening_key + "/risk");
-// #ifdef DEBUG
-//         Serial.print("Waiting Web App Classification... ");
-//         Serial.println(mlp_risk_label);
-// #endif
-
-//         if (millis() - poll_start > POLL_TIMEOUT_MS) {
-//           Serial.println("Timeout menunggu klasifikasi dari web app!");
-//           mlp_risk_label = 3;
-//           break;
-//         }
-//         delay(500);
-//       } while (mlp_risk_label == 255);
+//       if (stepperX.distanceToGo() > 0) {
+//         stepperX.setSpeed(MOTOR_SPEED);
+//       } else {
+//         stepperX.setSpeed(-MOTOR_SPEED);
+//       }
+//       is_X_init = true;
 //     }
 
-//   } else {
-//     mlp_risk_label = predict_test(ph_sensor, visc_sensor);
+//     if (stepperX.distanceToGo() != 0) {
+//       stepperX.runSpeed();
+//     } else {
+//       is_X_init = false;
+//       screening_state = SCREENING_SENSOR_MOVE_Y;
+//       motor_X_task_running = false;
+//       vTaskDelete(NULL);
+//     }
+//     taskYIELD();
 //   }
+// }
 
-//   lv_scr_load_anim(objects.result, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
+// void mv_motor_x_fin(void* pvParameters) {
+//   while (true) {
+//     if (!is_X_init) {
+//       stepperX.setMaxSpeed(MOTOR_SPEED);
+//       DISTANCE_TO_GO = -1 * DISTANCE_TO_GO;  // Ngembalikin lokasi sensor
+
+//       stepperX.move(DISTANCE_TO_GO);
+
+//       if (stepperX.distanceToGo() > 0) {
+//         stepperX.setSpeed(MOTOR_SPEED);
+//       } else {
+//         stepperX.setSpeed(-MOTOR_SPEED);
+//       }
+
+//       is_X_init = true;
+//     }
+
+//     if (stepperX.distanceToGo() != 0) {
+//       stepperX.runSpeed();
+//     } else {
+//       is_X_init = false;
+//       screening_state = SCREENING_SENSOR_MOVE_Y_FINISH;  // Harusnya finish Y
+//       motor_X_task_finishing = false;
+//       vTaskDelete(NULL);
+//     }
+//     taskYIELD();
+//   }
+// }
+
+// void move_sensor_y_motor(void* pvParameters) {
+//   while (true) {
+//     if (!is_Y_init) {
+//       stepperY.setMaxSpeed(MOTOR_SPEED);
+//       stepperY.move(DISTANCE_TO_GO);
+
+//       if (stepperY.distanceToGo() > 0) {
+//         stepperY.setSpeed(MOTOR_SPEED);
+//       } else {
+//         stepperY.setSpeed(-MOTOR_SPEED);
+//       }
+//       is_Y_init = true;
+//     }
+
+//     if (stepperX.distanceToGo() != 0) {
+//       stepperX.runSpeed();
+//     } else {
+//       is_Y_init = false;
+//       screening_state = SCREENING_SENSOR_READ;
+//       motor_Y_task_running = false;
+//       vTaskDelete(NULL);
+//     }
+//     taskYIELD();
+//   }
 // }
 
 const uint32_t POLL_INTERVAL_MS = 500;
@@ -177,7 +209,9 @@ void start_screening_process(String schedule_key, String student_key, String scr
   screening_schedule_key = schedule_key;
   screening_student_key = student_key;
   screening_key_active = screening_key;
-  screening_state = SCREENING_SENSOR_READ;
+  screening_state = SCREENING_SENSOR_MOVE_Y_PH;
+
+  global_variable["stop"] = false;
 
   if (screening_timer != NULL) lv_timer_del(screening_timer);
   last_millis_scan = millis();
@@ -206,10 +240,31 @@ void screening_process_tick(lv_timer_t* timer) {
   }
 
   switch (screening_state) {
-    case SCREENING_SENSOR_READ:
+    case SCREENING_SENSOR_MOVE_X_PH:
       {
-        ph_sensor = PH_INPUT_DUMMY;
-        visc_sensor = VISKOSITAS_INPUT_DUMMY;
+        if (!queued) {
+          create_queue_motor(&stepperX, 20000, SCREENING_SENSOR_MOVE_Y_PH);
+        }
+        break;
+        // if (!motor_X_task_running) {
+        //   motor_X_task_running = true;
+        //   xTaskCreatePinnedToCore(move_sensor_x_motor, "TaskMotor", 10000, NULL, 1, &TaskMotor, 0);
+        // }
+      }
+      break;
+    case SCREENING_SENSOR_MOVE_Y_PH:
+      {
+        if (!queued) {
+          create_queue_motor(&stepperY, -10000, SCREENING_SENSOR_READ_PH);
+        }
+        break;
+      }
+    case SCREENING_SENSOR_READ_PH:
+      {
+        // ph_sensor = PH_INPUT_DUMMY;
+        // visc_sensor = VISKOSITAS_INPUT_DUMMY;
+
+        ph_sensor = ph_dummy[esp_random() % 4];
 
         if (ph_sensor <= 0 || ph_sensor > 14) {
           lv_obj_remove_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
@@ -230,7 +285,73 @@ void screening_process_tick(lv_timer_t* timer) {
         // INI HANYA DUMMY PERCOBAAN BIAR AGAK LAMA WAKTU SCAN
         if (millis() - last_millis_scan > DUMMY_TIMEOUT_SCAN) {
           Serial.println("DONE!");
-          screening_state = SCREENING_SEND_TO_FIREBASE;
+          screening_state = SCREENING_SENSOR_MOVE_Y_RETURN_PH;
+        }
+        break;
+      }
+
+    case SCREENING_SENSOR_MOVE_Y_RETURN_PH:
+      {
+        if (!queued) {
+          create_queue_motor(&stepperY, 10000, SCREENING_SENSOR_MOVE_X_VISC);
+        }
+        break;
+      }
+
+    case SCREENING_SENSOR_MOVE_X_VISC:
+      {
+        if (!queued) {
+          create_queue_motor(&stepperX, 22000, SCREENING_SENSOR_MOVE_Y_VISC);
+        }
+        break;
+      }
+
+
+    case SCREENING_SENSOR_MOVE_Y_VISC:
+      {
+        if (!queued) {
+          create_queue_motor(&stepperY, -10000, SCREENING_SENSOR_READ_VISC);
+        }
+        break;
+      }
+
+    case SCREENING_SENSOR_READ_VISC:
+      {
+        visc_sensor = visc_dummy[esp_random() % 4];
+        if (visc_sensor <= 0) {
+          lv_obj_remove_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(objects.start_stop_screening_btn, LV_OBJ_FLAG_HIDDEN);
+          lv_obj_remove_flag(objects.back_in_second, LV_OBJ_FLAG_HIDDEN);
+
+          global_variable["ready"] = true;
+          global_variable["on_going"] = false;
+
+          lv_timer_del(timer);
+          screening_timer = NULL;
+          screening_state = SCREENING_IDLE;
+          return;
+        }
+
+        if (millis() - last_millis_scan > DUMMY_TIMEOUT_SCAN) {
+          Serial.println("DONE!");
+          screening_state = SCREENING_SENSOR_MOVE_Y_FINISH;
+        }
+        break;
+      }
+
+    case SCREENING_SENSOR_MOVE_Y_FINISH:
+      {
+        if (!queued) {
+          create_queue_motor(&stepperY, 10000, SCREENING_SENSOR_MOVE_X_FINISH);
+        }
+        break;
+      }
+
+    case SCREENING_SENSOR_MOVE_X_FINISH:
+      {
+        if (!queued) {
+          create_queue_motor(&stepperX, -22000, SCREENING_SEND_TO_FIREBASE);
         }
         break;
       }
@@ -249,8 +370,9 @@ void screening_process_tick(lv_timer_t* timer) {
           screening_state = SCREENING_WAIT_CLASSIFICATION;
         } else {
           mlp_risk_label = predict_test(ph_sensor, visc_sensor);
-          screening_state = SCREENING_DONE;
+          screening_state = SCREENING_WAIT_CLASSIFICATION;
         }
+        lv_scr_load_anim(objects.result, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
         break;
       }
 

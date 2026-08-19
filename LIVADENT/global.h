@@ -2,6 +2,7 @@
 #include <Preferences.h>
 #include <lvgl.h>
 #include <ArduinoJson.h>
+#include <AccelStepper.h>
 
 extern Preferences preferences;
 
@@ -19,11 +20,26 @@ typedef enum {
 
 typedef enum {
   SCREENING_IDLE,
-  SCREENING_SENSOR_READ,
+  SCREENING_SENSOR_MOVE_X_PH,
+  SCREENING_SENSOR_MOVE_Y_PH,
+  SCREENING_SENSOR_READ_PH,
+  SCREENING_SENSOR_MOVE_Y_RETURN_PH,
+  SCREENING_SENSOR_MOVE_X_VISC,
+  SCREENING_SENSOR_MOVE_Y_VISC,
+  SCREENING_SENSOR_MOVE_Y_RETURN_VISC,
+  SCREENING_SENSOR_READ_VISC,
   SCREENING_SEND_TO_FIREBASE,
   SCREENING_WAIT_CLASSIFICATION,
+  SCREENING_SENSOR_MOVE_X_FINISH,
+  SCREENING_SENSOR_MOVE_Y_FINISH,
   SCREENING_DONE
 } screening_state_t;
+
+struct motor {
+  AccelStepper* motor;
+  long distance;
+  screening_state_t next_state;
+};
 
 extern screening_state_t screening_state;
 extern lv_timer_t* screening_timer;

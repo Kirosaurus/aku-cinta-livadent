@@ -54,8 +54,7 @@ void webSocketEvent(
           "Client %u disconnected\n",
           clientNum);
 
-        if (
-          clientConnected && clientNum == activeClient) {
+        if (clientConnected && clientNum == activeClient) {
 
           clientConnected = false;
           activeClient = 255;
@@ -70,6 +69,16 @@ void webSocketEvent(
           // lv_image_set_src(objects.is_prototype_ready_indicator, &img_wifi_failed);
           // lv_label_set_text(objects.is_prototype_ready_label, "Alat Belum Siap Digunakan");
           // lv_obj_set_style_text_color(objects.is_prototype_ready_label, lv_color_hex(0xEB5757), NULL);
+        }
+
+        if(global_variable["on_progress"] == true){
+          global_variable["stop"] = true;
+
+          JsonDocument ret_val_json;
+          ret_val_json["info"] = "screening_stopped";
+          String ret_val;
+          serializeJson(ret_val_json, ret_val);
+          webSocket.sendTXT(clientNum, ret_val);
         }
 
         break;
@@ -151,6 +160,8 @@ void webSocketEvent(
             webSocket.sendTXT(clientNum, ret_val);
             break;
           }
+
+          webSocket.sendTXT(clientNum, "{\"info\" : \"started\"}");
 
           global_variable["on_going"] = true;
 
