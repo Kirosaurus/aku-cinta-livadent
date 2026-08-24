@@ -202,7 +202,7 @@ bool motor_X_task_finishing = false;
 // }
 
 const uint32_t POLL_INTERVAL_MS = 500;
-const uint32_t POLL_TIMEOUT_MS = 30000;
+const uint32_t POLL_TIMEOUT_MS = 60000;
 uint32_t last_millis_scan = 0;
 
 void start_screening_process(String schedule_key, String student_key, String screening_key) {
@@ -372,7 +372,7 @@ void screening_process_tick(lv_timer_t* timer) {
           mlp_risk_label = predict_test(ph_sensor, visc_sensor);
           screening_state = SCREENING_WAIT_CLASSIFICATION;
         }
-        lv_scr_load_anim(objects.result, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
+        // lv_scr_load_anim(objects.result, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
         break;
       }
 
