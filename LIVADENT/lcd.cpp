@@ -139,7 +139,6 @@ void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
   tft.startWrite();
   tft.setAddrWindow(area->x1, area->y1, w, h);
 
-  // Jika warna terlihat salah, coba ubah true menjadi false.
   tft.pushColors((uint16_t *)px_map, w * h, true);
 
   tft.endWrite();
@@ -148,9 +147,9 @@ void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
 }
 
 void update_UI() {
-  lv_tick_inc(millis() - lastTick);  //--> Update the tick timer. Tick is new for LVGL 9.
+  lv_tick_inc(millis() - lastTick);
   lastTick = millis();
-  lv_timer_handler();  //--> Update the UI.
+  lv_timer_handler(); 
 
   ui_tick();
 }

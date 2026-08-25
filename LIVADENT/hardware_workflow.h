@@ -27,6 +27,8 @@
 #define STEP_PIN_Y 32
 #define DIR_PIN_Y 33
 
+#define EMERGENCY_BTN_PIN 12
+
 using namespace std;
 
 extern Adafruit_ADS1115 ads;
@@ -39,3 +41,4 @@ extern void create_queue_motor(AccelStepper* motor_identifier, long distance, sc
 extern void screening_process_tick(lv_timer_t* timer);
 extern void start_screening_process(String schedule_key, String student_key, String screening_key);
 extern void stop_screening_process();
+extern void check_emergency_btn();

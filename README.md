@@ -18,6 +18,14 @@ Buka Arduino IDE, terus buka Library Manager dan install beberapa library ini :
 3. FirebaseClient
 4. ArduinoJson
 5. TensorFlowLite_ESP32
+6. AccelStepper
+7. Adafruit_ADS1X15
+8. ESPAsycWebServer Bundle (Harus install manual)
+
+Cara install libray nomer 8
+8A. Ekstrak File ESPAsycWebServer Bundle (Ada 2 folder)
+8B. Copy 2 filenya
+8C. Paste di Document->Arduino->libraries
 
 # Langkah 4 :
 Buka folder "LIVADENT" di repo ini, terus buka file "LIVADENT.ino"

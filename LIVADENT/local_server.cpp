@@ -44,35 +44,6 @@ void update_json() {
   }
 }
 
-// void send_cors_header() {
-//   server.sendHeader("Access-Control-Allow-Origin", "*");
-//   server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-// }
-
-void connect_web_app() {
-}
-
-void start_screening() {
-}
-
-void stop_screening() {
-}
-
-void interval_web_app() {
-  // send_cors_headers();
-  // JsonDocument doc;
-  // File file = LittleFS.open(CONFIG_PATH, "r");
-  // DeserializationError doc_error = deserializeJson(doc, file);
-
-  // if (global_variable["web_app"] == true) {
-  //   server.send(403);
-  //   return;
-  // }
-
-  // last_milli = millis();
-  // server.send(200, "application/json", "{\"info\" : \"Interval Updated!\"}");
-}
-
 bool require_session_key(AsyncWebServerRequest *request, bool is_post) {
   if (!request->hasParam("session_key", is_post)) {
     request->send(403, "application/json", "{\"reason\":\"Session Key Not Available\"}");
@@ -138,7 +109,6 @@ void init_endpoint_webserver() {
       return;
     }
 
-    // const AsyncWebParameter *session_key_param = request->getParam("session_key", true);
     if (!require_session_key(request, true)) return;
 
     last_milli = millis();
@@ -163,7 +133,6 @@ void init_endpoint_webserver() {
       return;
     }
 
-    // validasi dulu, baru set on_going -- supaya nggak "nyangkut" true kalau param nggak lengkap
     if (!(request->hasParam("schedule_id", true) && request->hasParam("student_id", true) && request->hasParam("key", true))) {
       request->send(400, "application/json", "{\"reason\":\"Missing Parameters\"}");
       return;
