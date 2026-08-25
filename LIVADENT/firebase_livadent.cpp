@@ -4,8 +4,7 @@ UserAuth user_auth(API_KEY, USER_EMAIL, USER_PASS);
 FirebaseApp firebaseApp;
 WiFiClientSecure ssl_client;
 
-using AsyncClient = AsyncClientClass;
-AsyncClient async_client(ssl_client);
+AsyncClientClass async_client(ssl_client);
 
 RealtimeDatabase database;
 AsyncResult dbResult;
@@ -20,9 +19,8 @@ void database_init() {
 }
 
 void set_device_active() {
-  database.set<String>(async_client,
-                       "saved_devices/" + WiFi.macAddress() + "/local_ip",
-                       WiFi.localIP().toString());
+  database.set<String>(async_client, "saved_devices/" + WiFi.macAddress() + "/local_ip", WiFi.localIP().toString());
+  Serial.println("IP Address Sent to Firebase! IP : " + WiFi.localIP().toString());
 }
 
 void processData(AsyncResult &aResult) {

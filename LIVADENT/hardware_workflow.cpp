@@ -40,7 +40,9 @@ void motor_task(void* pv) {
       while (motor_cmd.motor->distanceToGo() != 0) {
         motor_cmd.motor->runSpeed();
         taskYIELD();
+        // vTaskDelay(0.5);
       }
+      Serial.println("Motor Stoped");
       screening_state = motor_cmd.next_state;
       queued = false;
     }
@@ -265,7 +267,8 @@ void screening_process_tick(lv_timer_t* timer) {
         // visc_sensor = VISKOSITAS_INPUT_DUMMY;
 
         ph_sensor = ph_dummy[esp_random() % 4];
-
+        Serial.print("Got pH Sensor : ");
+        Serial.println(ph_sensor);
         if (ph_sensor <= 0 || ph_sensor > 14) {
           lv_obj_remove_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
@@ -318,6 +321,8 @@ void screening_process_tick(lv_timer_t* timer) {
     case SCREENING_SENSOR_READ_VISC:
       {
         visc_sensor = visc_dummy[esp_random() % 4];
+        Serial.print("Got Viscosity Sensor : ");
+        Serial.println(visc_sensor);
         if (visc_sensor <= 0) {
           lv_obj_remove_flag(objects.screening_failed, LV_OBJ_FLAG_HIDDEN);
           lv_obj_add_flag(objects.screening_on_progress, LV_OBJ_FLAG_HIDDEN);
@@ -359,12 +364,15 @@ void screening_process_tick(lv_timer_t* timer) {
     case SCREENING_SEND_TO_FIREBASE:
       {
         if (WiFi.status() == WL_CONNECTED && firebaseApp.ready()) {
-          database.set<String>(async_client, "screenings/" + screening_key_active + "/mode", "online");
+          Serial.printf("Free heap sebelum Firebase write: %u\n", ESP.getFreeHeap());
+          Serial.printf("Largest free block: %u\n", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
+          // database.set<String>(async_client, "screenings/" + screening_key_active + "/mode", "online");
           database.set<float>(async_client, "screenings/" + screening_key_active + "/ph", ph_sensor);
           database.set<float>(async_client, "screenings/" + screening_key_active + "/viscosity", visc_sensor);
-          database.set<int>(async_client, "screenings/" + screening_key_active + "/risk", -1);
-          database.set<String>(async_client, "screenings/" + screening_key_active + "/schedule_id", screening_schedule_key);
-          database.set<String>(async_client, "screenings/" + screening_key_active + "/student_id", screening_student_key);
+          // database.set<int>(async_client, "screenings/" + screening_key_active + "/risk", -1);
+          // database.set<String>(async_client, "screenings/" + screening_key_active + "/schedule_id", screening_schedule_key);
+          // database.set<String>(async_client, "screenings/" + screening_key_active + "/student_id", screening_student_key);
+          Serial.printf("Free heap sesudah Firebase write: %u\n", ESP.getFreeHeap());
 
           screening_poll_start_ms = millis();
           screening_state = SCREENING_WAIT_CLASSIFICATION;
@@ -399,6 +407,7 @@ void screening_process_tick(lv_timer_t* timer) {
         lv_timer_del(timer);
         screening_timer = NULL;
         screening_state = SCREENING_IDLE;
+        global_variable["web_app"] == false;
         lv_scr_load_anim(objects.result, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
         break;
       }

@@ -144,12 +144,20 @@ void splash_screen_loaded(lv_event_t* e) {
       lv_label_set_text(objects.process_init, "ADS Gagal Inisialisasi! Harap mulai ulang!");
       // return;
     }
+    uint32_t timeout_wifi_connect = millis();
+
+    while(WiFi.status() != WL_CONNECTED && millis() - timeout_wifi_connect < 15000){
+      lv_label_set_text(objects.process_init, "Trying to Connect...");
+    }
+
 
     if (WiFi.status() == WL_CONNECTED) {
       lv_label_set_text(objects.process_init, "Database Init...");
 #ifdef DEBUG
       Serial.println("Database Init...");
 #endif
+      init_endpoint_webserver();
+      server.begin();
       database_init();
       set_device_active();
     } else {
