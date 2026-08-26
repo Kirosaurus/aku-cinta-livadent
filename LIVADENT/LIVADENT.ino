@@ -57,6 +57,7 @@ void loop() {
   //   Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
   // #endif
   update_json();
+  check_emergency_btn();
   if (WiFi.status() == WL_CONNECTED) {
     firebaseApp.loop();
     // updateSessionKey();

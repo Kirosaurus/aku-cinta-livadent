@@ -385,15 +385,15 @@ void screening_process_tick(lv_timer_t* timer) {
 bool main_menu_loaded_emer = false;
 
 void check_emergency_btn(){
-  if(digitalRead(EMERGENCY_BTN_PIN)){
+  if(digitalRead(EMERGENCY_BTN_PIN) != 0){
     lv_scr_load(objects.emergency_stop);
     main_menu_loaded_emer = false;
     digitalWrite(EN_PIN_X, HIGH);
   }
-  else if (digitalRead(EMERGENCY_BTN_PIN) && !main_menu_loaded_emer) {
-    lv_scr_load(objects.main_menu);
+  else if (digitalRead(EMERGENCY_BTN_PIN) == 0 && !main_menu_loaded_emer) {
+    lv_scr_load(objects.main_menu); 
     digitalWrite(EN_PIN_X, LOW);
-    stop_screening_process();
+    // stop_screening_process();
     main_menu_loaded_emer = true;
   }
 }
