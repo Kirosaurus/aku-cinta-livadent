@@ -85,12 +85,15 @@ bool init_ph() {
   if (!is_ads) {
     return false;
   }
+  return true;
 }
 
 bool init_visc() {
   if (!is_ads) {
     return false;
   }
+
+  return true;
 }
 
 int read_adc_median(int channel) {
@@ -397,7 +400,7 @@ void screening_process_tick(lv_timer_t* timer) {
         lv_timer_del(timer);
         screening_timer = NULL;
         screening_state = SCREENING_IDLE;
-        global_variable["web_app"] == false;
+        global_variable["web_app"] = false;
         lv_scr_load_anim(objects.result, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
         break;
       }
