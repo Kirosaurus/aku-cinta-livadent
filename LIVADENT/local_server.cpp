@@ -15,8 +15,8 @@ char session_key[41] = "";
 void init_json() {
   global_variable["mac"] = WiFi.macAddress();
   global_variable["local_ip"] = WiFi.localIP().toString();
-  global_variable["is_ph"] = true;    // Ini nanti diganti sesuai dengan kondisi sensor
-  global_variable["is_visc"] = true;  // Ini juga
+  global_variable["is_ph"] = init_ph();    // Ini nanti diganti sesuai dengan kondisi sensor
+  global_variable["is_visc"] = init_visc();  // Ini juga
   global_variable["on_going"] = false;
   global_variable["web_app"] = false;
   global_variable["ready"] = false;
@@ -98,6 +98,7 @@ void init_endpoint_webserver() {
     ret_val["info"] = "success";
     ret_val["is_ph"] = global_variable["is_ph"];
     ret_val["is_visc"] = global_variable["is_visc"];
+    ret_val["on_going"] = global_variable["on_going"];
     serializeJson(ret_val, str_ret_val);
     request->send(200, "application/json", str_ret_val);
   });

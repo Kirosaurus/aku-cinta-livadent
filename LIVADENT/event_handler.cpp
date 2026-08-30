@@ -143,6 +143,8 @@ void splash_screen_loaded(lv_event_t* e) {
 #endif
       lv_label_set_text(objects.process_init, "ADS Gagal Inisialisasi! Harap mulai ulang!");
       // return;
+    }else{
+      is_ads = true;
     }
     uint32_t timeout_wifi_connect = millis();
 

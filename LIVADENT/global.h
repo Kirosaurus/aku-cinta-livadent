@@ -60,6 +60,7 @@ extern float visc_sensor;
 extern uint8_t mlp_risk_label;
 
 extern JsonDocument global_variable;
+extern bool is_ads;
 
 // MACRO CONFIGURATION
 #define DEBUG

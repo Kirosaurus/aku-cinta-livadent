@@ -5,31 +5,42 @@
 float ph_dummy[4] = { 6.12, 7.21, 6.73, 6.48 };
 float visc_dummy[4] = { 0.97, 1.38, 1.74, 2.38 };
 
-const double v7 = 1.8;
-const double v4 = 2.1;
-const double p7 = 6.86;
-const double p4 = 4.01;
-
 const uint16_t samples = 100;
 uint32_t last_progress = 0;
-
-const float slope = (p7 - p4) / (v7 - v4);
-const float offset = p4 - (slope * v4);
-
-Adafruit_ADS1115 ads;
 
 TaskHandle_t TaskMotor;
 QueueHandle_t xQueue;
 
 bool queued = false;
-volatile bool abort_motor = false; 
+volatile bool abort_motor = false;
+
+// All motor
+TMC2209Stepper driver(&SERIAL_PORT, R_SENSE, DRIVER_ADDRESS);
 AccelStepper stepperX(AccelStepper::DRIVER, STEP_PIN_X, DIR_PIN_X);
 AccelStepper stepperY(AccelStepper::DRIVER, STEP_PIN_Y, DIR_PIN_Y);
+AccelStepper stepperVisc(AccelStepper::DRIVER, STEP_VISC_PIN, DIR_VISC_PIN);
 
-// STEPPER MOTOR CONFIGURATION
+Adafruit_ADS1115 ads;
+
+// STEPPER MOVE MOTOR CONFIGURATION
 const float MOTOR_SPEED = 5000.0;
-
 float DISTANCE_TO_GO = -20000;
+
+// Visc Move Timeout
+uint32_t visc_timeout = 0;
+bool is_visc_active = false;
+
+void task_visc_motor(void* pvParameters) {
+  while (true) {
+    if (visc_timeout > SCAN_TIMEOUT) {
+      if (stepperVisc.distanceToGo() == 0) {
+        stepperVisc.moveTo(stepperVisc.currentPosition() + 200000000);
+      }
+      stepperVisc.run();
+    }
+    taskYIELD();
+  }
+}
 
 void motor_task(void* pv) {
   motor motor_cmd;
@@ -70,8 +81,17 @@ void create_queue_motor(AccelStepper* motor_identifier, long distance, screening
   xQueueSend(xQueue, &motor_cmd, 0);
 }
 
-bool is_X_init = false;
-bool is_Y_init = false;
+bool init_ph() {
+  if (!is_ads) {
+    return false;
+  }
+}
+
+bool init_visc() {
+  if (!is_ads) {
+    return false;
+  }
+}
 
 int read_adc_median(int channel) {
   int adc[samples];
@@ -105,11 +125,9 @@ void get_ph() {
   last_progress = millis();
   int adc1[samples];
   int i = 0;
-  Serial.println("Masuk");
   while (millis() - last_progress < SCAN_TIMEOUT) {
     adc1[i % samples] = read_adc_median(1);
     i++;
-    Serial.println("Skrining...");
   }
 
   Serial.println("Selesai Scan ADC");
@@ -122,7 +140,7 @@ void get_ph() {
 
   int volt = ads.computeVolts(total_adc1 / samples);
 
-  ph_sensor = -10.94 * get_digit(volt) + 45.22;
+  ph_sensor = -10.94 * get_digit(volt) + 45.22;  // Rumus dapetin pH
   Serial.println("Dapet Nilai pH");
 }
 
@@ -141,6 +159,7 @@ void start_screening_process(String schedule_key, String student_key, String scr
   screening_key_active = screening_key;
   screening_state = SCREENING_SENSOR_MOVE_Y_PH;
 
+  is_visc_active = false;
   global_variable["stop"] = false;
 
   if (screening_timer != NULL) lv_timer_del(screening_timer);
@@ -166,7 +185,6 @@ void stop_screening_process() {
 
   lv_scr_load_anim(objects.main_menu, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
 }
-
 
 void screening_process_tick(lv_timer_t* timer) {
   if (global_variable["stop"] == true && !stopping_in_progress) {
@@ -223,7 +241,8 @@ void screening_process_tick(lv_timer_t* timer) {
           screening_state = SCREENING_IDLE;
           return;
         }
-        Serial.println("Scan Finished");
+        get_ph();
+        Serial.println("Scanning pH...");
 
         // INI HANYA DUMMY PERCOBAAN BIAR AGAK LAMA WAKTU SCAN
         if (millis() - last_millis_scan > DUMMY_TIMEOUT_SCAN) {
@@ -276,6 +295,11 @@ void screening_process_tick(lv_timer_t* timer) {
           screening_timer = NULL;
           screening_state = SCREENING_IDLE;
           return;
+        }
+
+        if (!is_visc_active) {
+          xTaskCreatePinnedToCore(task_visc_motor, "Run Viscometer Motor", 10000, NULL, 1, &TaskMotor, 0);
+          is_visc_active = true;
         }
 
         if (millis() - last_millis_scan > DUMMY_TIMEOUT_SCAN) {
@@ -384,15 +408,14 @@ void screening_process_tick(lv_timer_t* timer) {
 
 bool main_menu_loaded_emer = false;
 
-void check_emergency_btn(){
-  if(digitalRead(EMERGENCY_BTN_PIN) != 0){
+void check_emergency_btn() {
+  if (digitalRead(EMERGENCY_BTN_PIN) != 0) {
     lv_scr_load(objects.emergency_stop);
     main_menu_loaded_emer = false;
-    digitalWrite(EN_PIN_X, HIGH);
-  }
-  else if (digitalRead(EMERGENCY_BTN_PIN) == 0 && !main_menu_loaded_emer) {
-    lv_scr_load(objects.main_menu); 
-    digitalWrite(EN_PIN_X, LOW);
+    digitalWrite(EN_MOVE_PIN, HIGH);
+  } else if (digitalRead(EMERGENCY_BTN_PIN) == 0 && !main_menu_loaded_emer) {
+    lv_scr_load(objects.main_menu);
+    digitalWrite(EN_MOVE_PIN, LOW);
     // stop_screening_process();
     main_menu_loaded_emer = true;
   }
