@@ -16,11 +16,11 @@ int samples = 100;
 // const float slope = (p7 - p4) / (v7 - v4);
 // const float offset = p4 - (slope * v4);
 
-float get_digit(float v){
+float get_digit(float v) {
   // float decimal = 0.01;
   // float temp = v%decimal;
   // return v - temp;
-   
+
   return round(v * 1000.0) / 1000.0;
 }
 

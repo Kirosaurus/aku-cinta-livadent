@@ -1,80 +1,178 @@
-const int samples = 10000;
-
+#include <AccelStepper.h>
+#include <TMCStepper.h>
+#include <Wire.h>
+#include <Adafruit_ADS1X15.h>
 #include <TFT_eSPI.h>
 
-#define SECOND_OFFSET 30000
-
-const double v7 = 2.39;
-const double v4  = 2.60;
-const double p7 = 6.86;
-const double p4 = 4.01;
-
-const float slope = (p7-p4) / (v7-v4);
-const float offset = p4 - (slope*v4);
- 
 TFT_eSPI tft = TFT_eSPI();
+volatile float viskositas_cP = 0.0;
+volatile float finalVoltage = 0.0;
+volatile float finalAdcRaw = 0.0;
 
-// void get_ph() {
-//   float totpH = 0;
-//   long long i = 0;
-//   while (millis() <= SECOND_OFFSET) {
-//     Serial.println(".");
-//     float volt = 3.3 / 4095 * analogRead(34);
-//     float pH = -57 * volt + 56.45;
-//     totpH += pH;
-//     i++;
-//   }
+Adafruit_ADS1115 ads;
 
+// Definisi Pin TMC2209
+const int STEP_PIN = 12;
+const int DIR_PIN = 13;
+const int EN_PIN = 26;
 
-//   Serial.print("Volt : ");
-//   Serial.println(3.3 / 4095 * analogRead(34));
-//   Serial.print("pH : ");
-//   Serial.println(totpH / i);
+// Definisi Pin Hardware Serial2
+const int RX_PIN = 17;
+const int TX_PIN = 16;
 
-//   tft.setCursor(0, 0);
-//   tft.fillScreen(ILI9341_BLUE);
-//   tft.print("Volt : ");
-//   tft.println(3.3 / 4095 * analogRead(34));
-//   tft.print("pH : ");
-//   tft.println(totpH / i);
-// }
+// Definisi Touch Pin Reset (GPIO 4 = Touch0)
+const int TOUCH_RESET_PIN = 4;
+const int TOUCH_THRESHOLD = 200;
+
+#define R_SENSE 0.11f
+#define DRIVER_ADDRESS 0b00
+
+TMC2209Stepper driver(&Serial2, R_SENSE, DRIVER_ADDRESS);
+AccelStepper stepper(AccelStepper::DRIVER, STEP_PIN, DIR_PIN);
+
+// Set kecepatan target
+const float TARGET_SPEED = 3000.0;
+const float ACCEL_RATE = 700.0;
+
+// --- PARAMETER KALIBRASI VISKOSITAS (cP) ---
+const float ADC_BASELINE_AIR = 21300.0;
+const float FAKTOR_SLOPE_M = 0.0125;
+const float OFFSET_C = 0.0;
+
+TaskHandle_t TaskSerialHandle;
+volatile bool triggerReset = false;
+
+void IRAM_ATTR gotTouched() {
+  triggerReset = true;  // Perbaikan: ubah ke true agar memicu restart
+}
+
+float hitungCentipoise(float rawAdc) {
+  // float deltaAdc = rawAdc - ADC_BASELINE_AIR;
+  // if (deltaAdc < 0) deltaAdc = 0;
+  // return (FAKTOR_SLOPE_M * deltaAdc) + OFFSET_C;
+
+  float visc_ret_val = rawAdc * 0.023776224 -496.034965;
+  return visc_ret_val;
+}
+
+void TaskSerial(void* pvParameters) {
+  for (;;) {
+    // 0. Cek Trigger Reset
+    if (triggerReset) {
+      Serial.println("\n[RESET] Touch terdeteksi! Mereset ESP32...");
+      // tft.fillScreen(TFT_RED);
+      // tft.setCursor(20, 50);
+      // tft.setTextColor(TFT_WHITE, TFT_RED);
+      // tft.println("RESETTING...");
+      vTaskDelay(100 / portTICK_PERIOD_MS);
+      ESP.restart();
+    }
+
+    int32_t activeSum = 0;
+    int validCount = 0;
+
+    // 1. Sampling cepat
+    for (int i = 0; i < 20; i++) {
+      int16_t val = ads.readADC_SingleEnded(0);
+      if (val > 4000) {
+        activeSum += val;
+        validCount++;
+      }
+      vTaskDelay(2 / portTICK_PERIOD_MS);
+    }
+
+    // 2. Tampilkan hasil jika ada sinyal valid
+    if (validCount > 0) {
+      finalAdcRaw = (float)activeSum / validCount;
+      finalVoltage = ads.computeVolts((int16_t)finalAdcRaw);
+      viskositas_cP = hitungCentipoise(finalAdcRaw);
+
+      // Print ke Serial Monitor
+      Serial.print("[Sensor] ADC: ");
+      Serial.print(finalAdcRaw, 1);
+      Serial.print(" | Volt: ");
+      Serial.print(finalVoltage, 4);
+      Serial.print(" V | Viskositas: ");
+      Serial.print(viskositas_cP, 2);
+      Serial.print("Viskositas: ");
+      Serial.print(validCount);
+      Serial.print(" | Touch: ");
+      Serial.println(touchRead(TOUCH_RESET_PIN));
+      // tft.fillScreen(TFT_BLACK);
+      // tft.setCursor(0, 0);
+      // tft.print("Viskositas: ");
+      // tft.print(viskositas_cP, 2);
+      // tft.println(" cP");
+    }
+
+    vTaskDelay(150 / portTICK_PERIOD_MS);
+  }
+}
 
 void setup() {
   Serial.begin(115200);
-  pinMode(34, INPUT);
-  tft.begin();
-  tft.setRotation(1);
-  tft.setTextSize(2);
+  while (!Serial)
+    ;
 
-  // get_ph();
+  Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+
+  Wire.begin(21, 22);
+  if (ads.begin(0x48)) {
+    ads.setGain(GAIN_ONE);
+    Serial.println("[OK] ADS1115 Terhubung!");
+  } else {
+    Serial.println("[ERROR] ADS1115 Tidak Ditemukan!");
+  }
+
+  pinMode(EN_PIN, OUTPUT);
+  digitalWrite(EN_PIN, LOW);
+
+  driver.begin();
+  uint8_t result = driver.test_connection();
+  if (result == 0) {
+    Serial.println("[OK] TMC2209 UART Terhubung!");
+  } else {
+    Serial.print("[ERROR] TMC2209 UART Gagal: ");
+    Serial.println(result);
+  }
+
+  driver.toff(5);
+  driver.rms_current(400);
+  driver.microsteps(8);
+  driver.en_spreadCycle(false);
+  driver.pwm_autoscale(true);
+
+  stepper.setMaxSpeed(TARGET_SPEED);
+  stepper.setAcceleration(ACCEL_RATE);
+  stepper.moveTo(20000000);
+
+  touchAttachInterrupt(TOUCH_RESET_PIN, gotTouched, TOUCH_THRESHOLD);
+
+  // Inisialisasi TFT LCD
+  // tft.begin();
+  // tft.setRotation(3);
+  // tft.fillScreen(TFT_BLACK);
+  // tft.setTextColor(TFT_WHITE);
+  // tft.setTextSize(2);
+
+  // tft.setCursor(20, 20);
+  // tft.println("TFT OK");
+
+  // tft.setCursor(20, 50);
+  // tft.println("ESP32 START");
+
+  // Jalankan Task LCD & Sensor di Core 0
+  xTaskCreatePinnedToCore(
+    TaskSerial,
+    "TaskSerial",
+    4096,
+    NULL,
+    1,
+    &TaskSerialHandle,
+    0);
 }
 
 void loop() {
-  // while (millis() <= SECOND_OFFSET) {
-    double totVolt = 0.00;
-    double volt = 0.00;
-    double totpH = 0.00;
-    double pH = 0.00;
-    for (int i = 0; i < samples; i++) {
-      volt = 3.3 / 4095 * analogRead(34);
-      // pH = -35.625 * volt + 37.85375;
-      pH = (slope * volt + offset);
-      totpH += pH;
-      totVolt += volt;
-      // i++;
-    }
-
-    Serial.print("Volt : ");
-    Serial.println(volt / samples,10);
-    Serial.print("pH : ");
-    Serial.println(totpH / samples,10);
-
-    tft.setCursor(0, 0);
-    tft.fillScreen(ILI9341_BLUE);
-    tft.print("Volt : ");
-    tft.println(volt / samples,10);
-    tft.print("pH : ");
-    tft.println(totpH / samples,10);
-    delay(100);
-  // }
+  Serial.println("huihi");
+  stepper.run();
 }

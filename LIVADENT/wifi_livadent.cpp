@@ -16,6 +16,7 @@ bool is_ssid_unique(char unique_ssid[][33], int jumlah_unique_ssid, const char* 
 
 void WiFi_scan() {
   int16_t apNum = WiFi.scanNetworks();
+  Serial.println (apNum);
   if (apNum < 0) {
     Serial.println("ERROR WIFI SCANNED!");
     return;
