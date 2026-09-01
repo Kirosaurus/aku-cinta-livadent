@@ -244,7 +244,7 @@ void screening_process_tick(lv_timer_t* timer) {
           screening_state = SCREENING_IDLE;
           return;
         }
-        get_ph();
+        // get_ph();
         Serial.println("Scanning pH...");
 
         // INI HANYA DUMMY PERCOBAAN BIAR AGAK LAMA WAKTU SCAN
