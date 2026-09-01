@@ -15,10 +15,10 @@ bool queued = false;
 volatile bool abort_motor = false;
 
 // All motor
-TMC2209Stepper driver(&SERIAL_PORT, R_SENSE, DRIVER_ADDRESS);
+// TMC2209Stepper driver(&SERIAL_PORT, R_SENSE, DRIVER_ADDRESS);
 AccelStepper stepperX(AccelStepper::DRIVER, STEP_PIN_X, DIR_PIN_X);
 AccelStepper stepperY(AccelStepper::DRIVER, STEP_PIN_Y, DIR_PIN_Y);
-AccelStepper stepperVisc(AccelStepper::DRIVER, STEP_VISC_PIN, DIR_VISC_PIN);
+// AccelStepper stepperVisc(AccelStepper::DRIVER, STEP_VISC_PIN, DIR_VISC_PIN);
 
 Adafruit_ADS1115 ads;
 
@@ -27,20 +27,20 @@ const float MOTOR_SPEED = 5000.0;
 float DISTANCE_TO_GO = -20000;
 
 // Visc Move Timeout
-uint32_t visc_timeout = 0;
-bool is_visc_active = false;
+// uint32_t visc_timeout = 0;
+// bool is_visc_active = false;
 
-void task_visc_motor(void* pvParameters) {
-  while (true) {
-    if (visc_timeout > SCAN_TIMEOUT) {
-      if (stepperVisc.distanceToGo() == 0) {
-        stepperVisc.moveTo(stepperVisc.currentPosition() + 200000000);
-      }
-      stepperVisc.run();
-    }
-    taskYIELD();
-  }
-}
+// void task_visc_motor(void* pvParameters) {
+//   while (true) {
+//     if (visc_timeout > SCAN_TIMEOUT) {
+//       if (stepperVisc.distanceToGo() == 0) {
+//         stepperVisc.moveTo(stepperVisc.currentPosition() + 200000000);
+//       }
+//       stepperVisc.run();
+//     }
+//     taskYIELD();
+//   }
+// }
 
 void motor_task(void* pv) {
   motor motor_cmd;
@@ -162,7 +162,7 @@ void start_screening_process(String schedule_key, String student_key, String scr
   screening_key_active = screening_key;
   screening_state = SCREENING_SENSOR_MOVE_Y_PH;
 
-  is_visc_active = false;
+  // is_visc_active = false;
   global_variable["stop"] = false;
 
   if (screening_timer != NULL) lv_timer_del(screening_timer);
@@ -300,10 +300,10 @@ void screening_process_tick(lv_timer_t* timer) {
           return;
         }
 
-        if (!is_visc_active) {
-          xTaskCreatePinnedToCore(task_visc_motor, "Run Viscometer Motor", 10000, NULL, 1, &TaskMotor, 0);
-          is_visc_active = true;
-        }
+        // if (!is_visc_active) {
+        //   // xTaskCreatePinnedToCore(task_visc_motor, "Run Viscometer Motor", 10000, NULL, 1, &TaskMotor, 0);
+        //   is_visc_active = true;
+        // }
 
         if (millis() - last_millis_scan > DUMMY_TIMEOUT_SCAN) {
           Serial.println("DONE!");

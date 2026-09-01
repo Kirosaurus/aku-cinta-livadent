@@ -7,7 +7,6 @@
 uint32_t last_milli = 0;
 
 bool session_timeout = false;
-// bool web_app_timeout = false;
 
 AsyncWebServer server(8888);
 char session_key[41] = "";
@@ -17,8 +16,6 @@ void init_json() {
   global_variable["local_ip"] = WiFi.localIP().toString();
   global_variable["is_ph"] = init_ph();    // Ini nanti diganti sesuai dengan kondisi sensor
   global_variable["is_visc"] = init_visc();  // Ini juga
-  // global_variable["is_ph"] = true;    // Ini nanti diganti sesuai dengan kondisi sensor
-  // global_variable["is_visc"] = true;  // Ini juga
   global_variable["on_going"] = false;
   global_variable["web_app"] = false;
   global_variable["ready"] = false;

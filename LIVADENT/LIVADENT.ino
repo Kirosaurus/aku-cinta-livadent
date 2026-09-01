@@ -20,21 +20,21 @@ void setup() {
   //
 
   // VISKOSITAS
-  driver.begin();
-  driver.toff(4);
-  driver.blank_time(24);
-  driver.rms_current(RMS_CURRENT);
-  driver.en_spreadCycle(true);
-  driver.pwm_autoscale(false);
-  driver.microsteps(8);
-  driver.intpol(true);
+  // driver.begin();
+  // driver.toff(4);
+  // driver.blank_time(24);
+  // driver.rms_current(RMS_CURRENT);
+  // driver.en_spreadCycle(true);
+  // driver.pwm_autoscale(false);
+  // driver.microsteps(8);
+  // driver.intpol(true);
 
-  stepperVisc.setMaxSpeed(4867);        
-  stepperVisc.setAcceleration(200);    
-  stepperVisc.setEnablePin(EN_VISC_PIN);
-  stepperVisc.setPinsInverted(false, false, true); 
-  stepperVisc.enableOutputs();
-  stepperVisc.moveTo(200000000);
+  // stepperVisc.setMaxSpeed(4867);        
+  // stepperVisc.setAcceleration(200);    
+  // stepperVisc.setEnablePin(EN_VISC_PIN);
+  // stepperVisc.setPinsInverted(false, false, true); 
+  // stepperVisc.enableOutputs();
+  // stepperVisc.moveTo(200000000);
   //
 
   xQueue = xQueueCreate(4, sizeof(motor));

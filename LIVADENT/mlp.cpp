@@ -83,13 +83,6 @@ void mlp_init() {
 }
 
 uint8_t predict_test(float ph, float viskositas) {
-  //   uniform_real_distribution<> distr(lower_pH, upper_pH);
-  //   double random_number = distr(gen);
-  //   uniform_real_distribution<> distr2(lower_visc, upper_visc);
-  //   double random_number_visc = distr2(gen);
-
-  //   double ph = random_number;
-  //   float viskositas = random_number_visc;
   float input_params[2]; 
   input_scaler(ph, viskositas, input_params); 
 

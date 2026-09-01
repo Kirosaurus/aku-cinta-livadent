@@ -2,10 +2,7 @@
 
 #include <lvgl.h>
 #include <ArduinoJson.h>
-// #include <WebServer.h>
 #include <ESPAsyncWebServer.h>
-// #include <esp_random.h>
-// #include <UI_LCD.h>
 
 #include "global.h"
 
