@@ -109,68 +109,29 @@ void splash_screen_done_timer(lv_timer_t* timer) {
 
 void splash_screen_loaded(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
-
   if (code == LV_EVENT_SCREEN_LOADED) {
     lv_obj_remove_flag(objects.process_init, LV_OBJ_FLAG_HIDDEN);
 
     saved_SSID = preferences.getString("saved_SSID", "");
     saved_Password = preferences.getString("saved_Password", "");
-#ifdef DEBUG
-    Serial.print("Saved SSID : ");
-    Serial.println(saved_SSID.c_str());
-#endif
+
     if (saved_SSID != "") {
       lv_label_set_text(objects.process_init, "Connecting Saved SSID...");
-#ifdef DEBUG
-      Serial.print("WiFi is Auto Connecting ");
-      Serial.println(saved_SSID.c_str());
-#endif
       WiFi.begin(saved_SSID.c_str(), saved_Password.c_str());
       wifi_state = WIFI_STATE_CONNECTING;
       wifi_connect_start_ms = millis();
-
-      if (wifi_timer != NULL) {
-        lv_timer_del(wifi_timer);
-      }
+      if (wifi_timer != NULL) lv_timer_del(wifi_timer);
       wifi_timer = lv_timer_create(WiFi_connect_tick, 300, NULL);
     }
-    // lv_timer_create(my_delay, 10000, NULL);
-    // lv_refr_now(NULL);
-    // delay(1000);
+
     if (!ads.begin()) {
-#ifdef DEBUG
-      Serial.println("ADS Gagal Inisialisasi");
-#endif
       lv_label_set_text(objects.process_init, "ADS Gagal Inisialisasi! Harap mulai ulang!");
-      // return;
-    }else{
-      is_ads = true;
-    }
-    uint32_t timeout_wifi_connect = millis();
-
-    while(WiFi.status() != WL_CONNECTED && millis() - timeout_wifi_connect < 15000){
-      lv_label_set_text(objects.process_init, "Trying to Connect...");
-    }
-
-
-    if (WiFi.status() == WL_CONNECTED) {
-      lv_label_set_text(objects.process_init, "Database Init...");
-#ifdef DEBUG
-      Serial.println("Database Init...");
-#endif
-      init_endpoint_webserver();
-      server.begin();
-      database_init();
-      set_device_active();
     } else {
-#ifdef DEBUG
-      Serial.println("Not Connected Yet");
-#endif
+      is_ads = true;
     }
 
     lv_label_set_text(objects.process_init, "Prototype Initialized!");
-
-    lv_timer_create(splash_screen_done_timer, 5000, NULL);
+    lv_timer_create(splash_screen_done_timer, 5000, NULL); 
   }
 }
 
