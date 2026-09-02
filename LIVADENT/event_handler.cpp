@@ -76,6 +76,8 @@ void result_loaded(lv_event_t* e) {
     lv_label_set_text(objects.ph_value, ph_value);
     lv_label_set_text(objects.visc_value, visc_value);
 
+    Serial.print("Result :"); Serial.println(mlp_risk_label);
+
     if (mlp_risk_label == 0) {
       lv_image_set_src(objects.risk_indicator, &img_low_risk);
       lv_obj_set_style_bg_color(objects.risk_bg, lv_color_hex(0xC8F4DB), NULL);
@@ -126,8 +128,11 @@ void splash_screen_loaded(lv_event_t* e) {
 
     if (!ads.begin()) {
       lv_label_set_text(objects.process_init, "ADS Gagal Inisialisasi! Harap mulai ulang!");
+      Serial.println("ADS DSADJAPDAJ");
     } else {
+      Serial.println("Anjay ADS");
       is_ads = true;
+      init_json();
     }
 
     lv_label_set_text(objects.process_init, "Prototype Initialized!");

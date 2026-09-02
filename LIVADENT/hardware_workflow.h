@@ -22,26 +22,26 @@
 
 #define DUMMY_TIMEOUT_SCAN 10000  // INI CUMA DUMMY LEBIH CEPET DARI PADA YANG SEHARUSNYA
 
-// Pin Motor Penggerak Sensor
-#define DIR_PIN_X 13
-#define STEP_PIN_X 14
-#define EN_MOVE_PIN 17
-#define STEP_PIN_Y 32
-#define DIR_PIN_Y 33
+// Pin Motor Penggerak Sensor // EN 17 BEFORE
+#define DIR_PIN_X 33
+#define STEP_PIN_X 32
+#define EN_MOVE_PIN 12
+#define STEP_PIN_Y 14
+#define DIR_PIN_Y 13
 
-// Pin Viskositas
-#define EN_VISC_PIN 16
+// Pin Viskositas // EN 16 BEFORE
+#define EN_VISC_PIN 12
 #define DIR_VISC_PIN 26
 #define STEP_VISC_PIN 27
 
 // Konfigurasi Viskositas
 #define R_SENSE 0.11f
-#define SERIAL_PORT Serial0
+#define SERIAL_PORT Serial2
 #define RMS_CURRENT 367
 #define DRIVER_ADDRESS 0b00
 
 // Pin Emergency Button
-#define EMERGENCY_BTN_PIN 12
+#define EMERGENCY_BTN_PIN 34
 
 using namespace std;
 

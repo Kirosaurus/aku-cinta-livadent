@@ -30,15 +30,31 @@ float DISTANCE_TO_GO = -20000;
 uint32_t visc_timeout = 0;
 bool is_visc_active = false;
 
-void task_visc_motor(void* pvParameters) {
-  while (true) {
-    if (visc_timeout > SCAN_TIMEOUT) {
-      if (stepperVisc.distanceToGo() == 0) {
-        stepperVisc.moveTo(stepperVisc.currentPosition() + 200000000);
-      }
-      stepperVisc.run();
+esp_timer_handle_t visc_step_timer = NULL;
+
+void visc_step_callback(void* arg) {
+  if (millis() - visc_timeout > SCAN_TIMEOUT) {
+    if (stepperVisc.distanceToGo() == 0) {
+      stepperVisc.moveTo(stepperVisc.currentPosition() + 200000000);
     }
-    taskYIELD();
+    stepperVisc.run();
+  }
+}
+
+void start_visc_motor_timer() {
+  const esp_timer_create_args_t timer_args = {
+    .callback = &visc_step_callback,
+    .name = "visc_step_timer"
+  };
+  esp_timer_create(&timer_args, &visc_step_timer);
+  esp_timer_start_periodic(visc_step_timer, 200);  
+}
+
+void stop_visc_motor_timer() {
+  if (visc_step_timer != NULL) {
+    esp_timer_stop(visc_step_timer);
+    esp_timer_delete(visc_step_timer);
+    visc_step_timer = NULL;
   }
 }
 
@@ -62,6 +78,7 @@ void motor_task(void* pv) {
         // vTaskDelay(0.5);
       }
 
+      digitalWrite(EN_MOVE_PIN, HIGH);
       queued = false;
 
       if (aborted) {
@@ -78,6 +95,7 @@ void motor_task(void* pv) {
 void create_queue_motor(AccelStepper* motor_identifier, long distance, screening_state_t next_state) {
   motor motor_cmd = { motor_identifier, distance, next_state };
   queued = true;
+  digitalWrite(EN_MOVE_PIN, LOW);
   xQueueSend(xQueue, &motor_cmd, 0);
 }
 
@@ -162,8 +180,11 @@ void start_screening_process(String schedule_key, String student_key, String scr
   screening_key_active = screening_key;
   screening_state = SCREENING_SENSOR_MOVE_Y_PH;
 
-  // is_visc_active = false;
+  is_visc_active = false;
   global_variable["stop"] = false;
+  mlp_risk_label = 3;
+  ph_sensor = -1;
+  visc_sensor = -1;
 
   if (screening_timer != NULL) lv_timer_del(screening_timer);
   last_millis_scan = millis();
@@ -219,7 +240,7 @@ void screening_process_tick(lv_timer_t* timer) {
     case SCREENING_SENSOR_MOVE_Y_PH:
       {
         if (!queued) {
-          create_queue_motor(&stepperY, -10000, SCREENING_SENSOR_READ_PH);
+          create_queue_motor(&stepperY, 10000, SCREENING_SENSOR_READ_PH);
           first_pos = false;
         }
         break;
@@ -258,7 +279,7 @@ void screening_process_tick(lv_timer_t* timer) {
     case SCREENING_SENSOR_MOVE_Y_RETURN_PH:
       {
         if (!queued) {
-          create_queue_motor(&stepperY, 10000, SCREENING_SENSOR_MOVE_X_VISC);
+          create_queue_motor(&stepperY, -10000, SCREENING_SENSOR_MOVE_X_VISC);
         }
         break;
       }
@@ -275,7 +296,7 @@ void screening_process_tick(lv_timer_t* timer) {
     case SCREENING_SENSOR_MOVE_Y_VISC:
       {
         if (!queued) {
-          create_queue_motor(&stepperY, -10000, SCREENING_SENSOR_READ_VISC);
+          create_queue_motor(&stepperY, 10000, SCREENING_SENSOR_READ_VISC);
         }
         break;
       }
@@ -301,7 +322,8 @@ void screening_process_tick(lv_timer_t* timer) {
         }
 
         if (!is_visc_active) {
-          xTaskCreatePinnedToCore(task_visc_motor, "Run Viscometer Motor", 10000, NULL, 1, &TaskMotor, 0);
+          visc_timeout = millis();
+          start_visc_motor_timer();
           is_visc_active = true;
         }
 
@@ -315,7 +337,7 @@ void screening_process_tick(lv_timer_t* timer) {
     case SCREENING_SENSOR_MOVE_Y_FINISH:
       {
         if (!queued) {
-          create_queue_motor(&stepperY, 10000, SCREENING_SENSOR_MOVE_X_FINISH);
+          create_queue_motor(&stepperY, -10000, SCREENING_SENSOR_MOVE_X_FINISH);
         }
         break;
       }
@@ -355,7 +377,8 @@ void screening_process_tick(lv_timer_t* timer) {
           screening_state = SCREENING_WAIT_CLASSIFICATION;
         } else {
           mlp_risk_label = predict_test(ph_sensor, visc_sensor);
-          screening_state = SCREENING_WAIT_CLASSIFICATION;
+          Serial.println(mlp_risk_label);
+          screening_state = SCREENING_DONE;
         }
         // lv_scr_load_anim(objects.result, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
         break;
@@ -363,6 +386,7 @@ void screening_process_tick(lv_timer_t* timer) {
 
     case SCREENING_WAIT_CLASSIFICATION:
       {
+        Serial.println(mlp_risk_label);
         static uint32_t last_poll = 0;
         if (millis() - last_poll >= POLL_INTERVAL_MS) {
           last_poll = millis();

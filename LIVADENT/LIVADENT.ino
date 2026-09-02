@@ -17,6 +17,7 @@ void setup() {
   // HARDWARE
   pinMode(EN_MOVE_PIN, OUTPUT);
   pinMode(PIN_SENSOR_PH, INPUT);
+  digitalWrite(EN_MOVE_PIN, HIGH);
   //
 
   // VISKOSITAS
@@ -44,6 +45,7 @@ void setup() {
     Serial.println("LittleFS gagal dimount");
   }
 
+  // Wire.begin(21, 22);
   ads.setGain(GAIN_TWOTHIRDS);
 
   preferences.begin("wifi", false);
@@ -81,11 +83,11 @@ void loop() {
     // updateSessionKey();
   }
 
-  if (firebaseApp.ready() && !anu) {
-    set_device_active();
-    // predict_test();
-    anu = 1;
-  }
+  // if (firebaseApp.ready() && !anu) {
+  //   set_device_active();
+  //   // predict_test();
+  //   anu = 1;
+  // }
 
   update_UI();
 
