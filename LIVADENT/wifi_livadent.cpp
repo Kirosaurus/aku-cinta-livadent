@@ -111,11 +111,9 @@ void WiFi_connect_tick(lv_timer_t* timer) {
 
       Serial.println("Database Init...");
       database_init();
-      // webSocket.begin();
       init_endpoint_webserver();
       server.begin();
       set_device_active();
-      // webSocket.onEvent(webSocketEvent); 
       disconnect_btn_interface_update();
       wifi_settings_heading_interface_update();
     } else if (elapsed >= WIFI_CONNECT_TIMEOUT) {

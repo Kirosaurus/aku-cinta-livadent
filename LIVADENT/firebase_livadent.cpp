@@ -59,13 +59,6 @@ void processData(AsyncResult &aResult) {
       Serial.println(" cP");
       Serial.println(String(doc["risk"]));
 
-    //   const char *risiko_labels[] = { "Rendah", "Sedang", "Tinggi" };
-    //   int risiko = doc["risiko"] | -1;
-    //   if (risiko >= 0 && risiko <= 2) {
-    //     Serial.print("Risiko : ");
-    //     Serial.println(risiko_labels[risiko]);
-    //   }
-
       Serial.print("Payload: ");
       Serial.println(aResult.c_str());
     } while (doc["risk"] == -1);

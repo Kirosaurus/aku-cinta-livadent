@@ -65,32 +65,20 @@ void setup() {
 #endif
 }
 
-bool anu = 0;
+bool anu = false;
 void loop() {
-
-  // webSocket.loop();
-  // #ifdef DEBUG
-  //   Serial.print("Total Heap: ");
-  //   Serial.println(ESP.getHeapSize());
-  //   Serial.print("Free Heap: ");
-  //   Serial.println(ESP.getFreeHeap());
-  //   Serial.printf("Free DRAM: %u\n", heap_caps_get_free_size(MALLOC_CAP_8BIT));
-  // #endif
   update_json();
   check_emergency_btn();
   if (WiFi.status() == WL_CONNECTED) {
     firebaseApp.loop();
-    // updateSessionKey();
   }
 
-  // if (firebaseApp.ready() && !anu) {
-  //   set_device_active();
-  //   // predict_test();
-  //   anu = 1;
-  // }
+  if (firebaseApp.ready() && !anu) {
+    set_device_active();
+    anu=true;
+  }
 
   update_UI();
 
-  // webSocket.loop();
   delay(5);
 }
