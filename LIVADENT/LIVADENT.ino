@@ -50,12 +50,12 @@ void setup() {
 
   preferences.begin("wifi", false);
 
-  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");  
   lcd_setup();
   mlp_init();
   init_json();  // No Mac Address dan No IP kalo misal egak ada auto connect SSID (only "on_progress" attribute)
   WiFi.setSleep(false);
-
+  
 #ifdef DEBUG
   Serial.print("Total Heap: ");
   Serial.println(ESP.getHeapSize());
