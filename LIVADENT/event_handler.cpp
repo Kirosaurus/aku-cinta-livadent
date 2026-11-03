@@ -487,3 +487,30 @@ void wifi_page_next_btn(lv_event_t* e) {
     }
   }
 }
+
+void go_to_calibration_page(lv_event_t* e){
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_CLICKED){
+    lv_scr_load_anim(objects.calibration_menu, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
+  }
+}
+
+void go_to_calibration_ph_page(lv_event_t* e){
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if(code == LV_EVENT_CLICKED){
+    lv_scr_load_anim(objects.ph_calibration, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
+  }
+
+}
+
+void go_to_calibration_visc_page(lv_event_t* e){
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if(code == LV_EVENT_CLICKED){
+    lv_scr_load_anim(objects.visc_calibration, LV_SCR_LOAD_ANIM_FADE_IN, 0, 200, false);
+  }
+}
+
+

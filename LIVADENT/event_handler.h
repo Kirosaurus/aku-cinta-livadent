@@ -34,3 +34,7 @@ extern void wifi_page_prev_btn(lv_event_t* e);
 extern void wifi_page_next_btn(lv_event_t* e);
 // extern void back_wifi_btn(lv_event_t * e);
 // extern void back_btn_screening(lv_event_t * e);
+
+extern void go_to_calibration_page(lv_event_t* e);
+extern void go_to_calibration_ph_page(lv_event_t* e);
+extern void go_to_calibration_visc_page(lv_event_t* e);

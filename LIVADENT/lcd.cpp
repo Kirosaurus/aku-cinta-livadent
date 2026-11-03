@@ -99,6 +99,19 @@ void lcd_setup() {
   lv_obj_add_event_cb(objects.wifi_page_prev_btn, wifi_page_prev_btn, LV_EVENT_CLICKED, NULL);
 
   lv_obj_add_event_cb(objects.wifi_page_next_btn, wifi_page_next_btn, LV_EVENT_CLICKED, NULL);
+  
+  lv_obj_add_event_cb(objects.logo_livadent_main_menu, go_to_calibration_page, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.back_btn_menu_calibration, back_btn, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.back_btn_visc_calibration, go_to_calibration_page, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.back_btn_visc_calibration, go_to_calibration_page, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.ph_calibrate_option, go_to_calibration_ph_page, LV_EVENT_CLICKED, NULL);
+
+  lv_obj_add_event_cb(objects.visc_calibrate_option, go_to_calibration_visc_page, LV_EVENT_CLICKED, NULL);
+
 }
 
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
